@@ -1,0 +1,62 @@
+%--------------------------------------------------------------------------
+% NASA GMAT R2026a Reference Scenario - Mars B-Plane & MOI (Mision 03)
+% Derived from NASA GMAT Ex_MarsBPlane.script (MAVEN baseline)
+% Analogue NASA Missions: MAVEN / Mars Odyssey / Dawn
+%--------------------------------------------------------------------------
+
+Create Spacecraft AresProbe;
+GMAT AresProbe.DateFormat = UTCGregorian;
+GMAT AresProbe.Epoch = '18 Nov 2026 20:26:24.315';
+GMAT AresProbe.CoordinateSystem = SunMJ2000Ec;
+GMAT AresProbe.DisplayStateType = Keplerian;
+GMAT AresProbe.SMA = 194500000.0;
+GMAT AresProbe.ECC = 0.215;
+GMAT AresProbe.INC = 2.4;
+GMAT AresProbe.DryMass = 240.0;
+GMAT AresProbe.Cr = 1.06;
+GMAT AresProbe.SRPArea = 18.0;
+
+Create ChemicalTank MainTank;
+GMAT MainTank.FuelMass = 210.0;
+GMAT AresProbe.Tanks = {MainTank};
+
+Create ForceModel DeepSpace_Mars;
+GMAT DeepSpace_Mars.CentralBody = Sun;
+GMAT DeepSpace_Mars.PrimaryBodies = {Mars};
+GMAT DeepSpace_Mars.GravityField.Mars.Degree = 8;
+GMAT DeepSpace_Mars.GravityField.Mars.Order = 8;
+GMAT DeepSpace_Mars.GravityField.Mars.PotentialFile = 'Mars50c.cof';
+GMAT DeepSpace_Mars.PointMasses = {Earth, Venus, Jupiter};
+GMAT DeepSpace_Mars.Drag = None;
+GMAT DeepSpace_Mars.SRP = On;
+GMAT DeepSpace_Mars.SRP.Flux = 1358;
+GMAT DeepSpace_Mars.SRP.Nominal_Sun = 149597870.691;
+
+Create Propagator DeepSpaceProp;
+GMAT DeepSpaceProp.FM = DeepSpace_Mars;
+GMAT DeepSpaceProp.Type = RungeKutta89;
+GMAT DeepSpaceProp.Accuracy = 1e-11;
+
+Create ImpulsiveBurn TCM1;
+GMAT TCM1.CoordinateSystem = Local;
+GMAT TCM1.Origin = Earth;
+GMAT TCM1.Axes = VNB;
+GMAT TCM1.Element1 = 0.065;
+GMAT TCM1.DecrementMass = true;
+GMAT TCM1.Tank = {MainTank};
+GMAT TCM1.Isp = 3200;
+
+Create ImpulsiveBurn MOI_Burn;
+GMAT MOI_Burn.CoordinateSystem = Local;
+GMAT MOI_Burn.Origin = Mars;
+GMAT MOI_Burn.Axes = VNB;
+GMAT MOI_Burn.Element1 = -2.650;
+GMAT MOI_Burn.DecrementMass = true;
+GMAT MOI_Burn.Tank = {MainTank};
+GMAT MOI_Burn.Isp = 3200;
+
+BeginMissionSequence;
+Propagate DeepSpaceProp(AresProbe) {AresProbe.ElapsedDays = 60.0};
+Maneuver TCM1(AresProbe);
+Propagate DeepSpaceProp(AresProbe) {AresProbe.ElapsedDays = 180.0};
+Maneuver MOI_Burn(AresProbe);

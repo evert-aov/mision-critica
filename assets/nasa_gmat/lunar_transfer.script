@@ -1,0 +1,65 @@
+%--------------------------------------------------------------------------
+% NASA GMAT R2026a Reference Scenario - Cislunar Assist & Lunar Orbit (Mision 02)
+% Derived from NASA GMAT Ex_LunarTransfer.script (AllForces JGM2 + LP165P)
+% Analogue NASA Missions: CAPSTONE / Lunar Trailblazer (Artemis)
+%--------------------------------------------------------------------------
+
+Create Spacecraft LunarProbe;
+GMAT LunarProbe.DateFormat = UTCGregorian;
+GMAT LunarProbe.Epoch = '22 Jul 2026 11:29:10.811';
+GMAT LunarProbe.CoordinateSystem = EarthMJ2000Eq;
+GMAT LunarProbe.DisplayStateType = Keplerian;
+GMAT LunarProbe.SMA = 198500.0;
+GMAT LunarProbe.ECC = 0.962;
+GMAT LunarProbe.INC = 28.5;
+GMAT LunarProbe.DryMass = 215.0;
+GMAT LunarProbe.Cr = 1.7;
+GMAT LunarProbe.SRPArea = 10.5;
+
+Create ChemicalTank BipropTank;
+GMAT BipropTank.FuelMass = 180.0;
+GMAT LunarProbe.Tanks = {BipropTank};
+
+Create ForceModel AllForces_Cislunar;
+GMAT AllForces_Cislunar.CentralBody = Earth;
+GMAT AllForces_Cislunar.PrimaryBodies = {Earth, Luna};
+GMAT AllForces_Cislunar.GravityField.Earth.Degree = 20;
+GMAT AllForces_Cislunar.GravityField.Earth.Order = 20;
+GMAT AllForces_Cislunar.GravityField.Earth.PotentialFile = 'JGM2.cof';
+GMAT AllForces_Cislunar.GravityField.Luna.Degree = 20;
+GMAT AllForces_Cislunar.GravityField.Luna.Order = 20;
+GMAT AllForces_Cislunar.GravityField.Luna.PotentialFile = 'LP165P.cof';
+GMAT AllForces_Cislunar.PointMasses = {Sun};
+GMAT AllForces_Cislunar.Drag = None;
+GMAT AllForces_Cislunar.SRP = On;
+GMAT AllForces_Cislunar.SRP.Flux = 1367;
+GMAT AllForces_Cislunar.SRP.Nominal_Sun = 149597870.691;
+
+Create Propagator MoonProp;
+GMAT MoonProp.FM = AllForces_Cislunar;
+GMAT MoonProp.Type = RungeKutta89;
+GMAT MoonProp.Accuracy = 1e-11;
+
+Create ImpulsiveBurn CislunarTCM;
+GMAT CislunarTCM.CoordinateSystem = Local;
+GMAT CislunarTCM.Origin = Earth;
+GMAT CislunarTCM.Axes = VNB;
+GMAT CislunarTCM.Element1 = 0.085;
+GMAT CislunarTCM.DecrementMass = true;
+GMAT CislunarTCM.Tank = {BipropTank};
+GMAT CislunarTCM.Isp = 315;
+
+Create ImpulsiveBurn LOI_Retro;
+GMAT LOI_Retro.CoordinateSystem = Local;
+GMAT LOI_Retro.Origin = Luna;
+GMAT LOI_Retro.Axes = VNB;
+GMAT LOI_Retro.Element1 = -1.750;
+GMAT LOI_Retro.DecrementMass = true;
+GMAT LOI_Retro.Tank = {BipropTank};
+GMAT LOI_Retro.Isp = 315;
+
+BeginMissionSequence;
+Propagate MoonProp(LunarProbe) {LunarProbe.ElapsedDays = 1.2};
+Maneuver CislunarTCM(LunarProbe);
+Propagate MoonProp(LunarProbe) {LunarProbe.ElapsedDays = 3.3};
+Maneuver LOI_Retro(LunarProbe);

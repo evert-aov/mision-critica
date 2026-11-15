@@ -1,0 +1,63 @@
+%--------------------------------------------------------------------------
+% NASA GMAT R2026a Reference Scenario - LEO 420 km Optical SmallSat (Mision 01)
+% Derived from NASA GMAT Tut_SimpleOrbitTransfer.script & CubeSat 101 LEO profile
+% Analogue NASA Missions: PUNCH / BisonSat / Dellingr
+%--------------------------------------------------------------------------
+
+Create Spacecraft LEOProbe;
+GMAT LEOProbe.DateFormat = UTCGregorian;
+GMAT LEOProbe.Epoch = '01 Jul 2026 12:00:00.000';
+GMAT LEOProbe.CoordinateSystem = EarthMJ2000Eq;
+GMAT LEOProbe.DisplayStateType = Keplerian;
+GMAT LEOProbe.SMA = 6798.14;
+GMAT LEOProbe.ECC = 0.0012;
+GMAT LEOProbe.INC = 51.6;
+GMAT LEOProbe.DryMass = 185.0;
+GMAT LEOProbe.Cr = 1.7;
+GMAT LEOProbe.DragArea = 2.4;
+GMAT LEOProbe.SRPArea = 4.2;
+
+Create ChemicalTank HydrazineTank;
+GMAT HydrazineTank.FuelMass = 85.0;
+GMAT LEOProbe.Tanks = {HydrazineTank};
+
+Create ForceModel FM_LEO;
+GMAT FM_LEO.CentralBody = Earth;
+GMAT FM_LEO.PrimaryBodies = {Earth};
+GMAT FM_LEO.GravityField.Earth.Degree = 8;
+GMAT FM_LEO.GravityField.Earth.Order = 8;
+GMAT FM_LEO.GravityField.Earth.PotentialFile = 'JGM2.cof';
+GMAT FM_LEO.PointMasses = {Luna, Sun};
+GMAT FM_LEO.Drag.AtmosphereModel = 'JacchiaRoberts';
+GMAT FM_LEO.SRP = On;
+GMAT FM_LEO.SRP.Flux = 1367;
+GMAT FM_LEO.SRP.Nominal_Sun = 149597870.691;
+
+Create Propagator PropLEO;
+GMAT PropLEO.FM = FM_LEO;
+GMAT PropLEO.Type = RungeKutta89;
+GMAT PropLEO.Accuracy = 1e-11;
+
+Create ImpulsiveBurn PerigeeTCM;
+GMAT PerigeeTCM.CoordinateSystem = Local;
+GMAT PerigeeTCM.Origin = Earth;
+GMAT PerigeeTCM.Axes = VNB;
+GMAT PerigeeTCM.Element1 = 0.045;
+GMAT PerigeeTCM.DecrementMass = true;
+GMAT PerigeeTCM.Tank = {HydrazineTank};
+GMAT PerigeeTCM.Isp = 225;
+
+Create ImpulsiveBurn OrbitCircularize;
+GMAT OrbitCircularize.CoordinateSystem = Local;
+GMAT OrbitCircularize.Origin = Earth;
+GMAT OrbitCircularize.Axes = VNB;
+GMAT OrbitCircularize.Element1 = -0.700;
+GMAT OrbitCircularize.DecrementMass = true;
+GMAT OrbitCircularize.Tank = {HydrazineTank};
+GMAT OrbitCircularize.Isp = 225;
+
+BeginMissionSequence;
+Propagate PropLEO(LEOProbe) {LEOProbe.ElapsedDays = 0.12};
+Maneuver PerigeeTCM(LEOProbe);
+Propagate PropLEO(LEOProbe) {LEOProbe.ElapsedDays = 0.35};
+Maneuver OrbitCircularize(LEOProbe);

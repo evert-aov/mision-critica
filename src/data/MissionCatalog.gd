@@ -49,8 +49,8 @@ static func create_all() -> Array[MissionSpec]:
 			"insertion_window_start_norm": 0.72,
 			"insertion_dv_required": 700.0,
 			"target_palette": "earth",
-			"brief": "Integra la sonda en un Vega-C Ligero respetando masa (420 kg) y presupuesto ($115k). Captura y transmite la Cámara Multiespectral (>=100 pts) e inserta en LEO girando 180° Retrógrado.",
-			"brief_en": "Fit the probe onto a Vega-C Light within mass (420 kg) & budget ($115k). Capture & downlink Multispectral Camera (>=100 pts) and insert into LEO with a 180° Retrograde burn.",
+			"brief": "Integra la sonda en un Vega-C Ligero respetando masa (420 kg) y presupuesto ($115k). Referencia NASA: PUNCH / BisonSat (CubeSat 101 + ODAR/DITL). Captura Cámara Multiespectral (>=100 pts) e inserta en LEO girando 180° Retrógrado.",
+			"brief_en": "Fit the probe onto a Vega-C Light within mass (420 kg) & budget ($115k). NASA analogue: PUNCH / BisonSat (CubeSat 101 + ODAR/DITL). Capture Multispectral Camera (>=100 pts) and insert into LEO with a 180° Retrograde burn.",
 		}),
 		MissionSpec.new({
 			"id": "lunar_flyby",
@@ -94,8 +94,8 @@ static func create_all() -> Array[MissionSpec]:
 			"insertion_window_start_norm": 0.74,
 			"insertion_dv_required": 1750.0,
 			"target_palette": "moon",
-			"brief": "Equilibra lanzador Ariane-62, propelente, baterías para 2 eclipses y enlace de 86 MB (Cámara + Espectrómetro IR >=220 pts). Usa la Honda Cislunar (+400 m/s) y frena a 180° en la Luna.",
-			"brief_en": "Balance Ariane-62 launcher, propellant, batteries for 2 eclipses & an 86 MB link (Camera + IR Spec >=220 pts). Ride the Cislunar Assist (+400 m/s) and brake 180° at the Moon.",
+			"brief": "Equilibra Ariane-62, baterías para 2 eclipses y enlace de 86 MB (Cámara + IR >=220 pts). Modelo NASA: CAPSTONE / Lunar Trailblazer (JGM2+LP165P). Usa Honda Cislunar (+400 m/s) y frena 180° en la Luna.",
+			"brief_en": "Balance Ariane-62, batteries for 2 eclipses & an 86 MB link (Camera + IR >=220 pts). NASA model: CAPSTONE / Lunar Trailblazer (JGM2+LP165P). Ride the Cislunar Assist (+400 m/s) and brake 180° at the Moon.",
 		}),
 		MissionSpec.new({
 			"id": "mars_orbit",
@@ -139,7 +139,7 @@ static func create_all() -> Array[MissionSpec]:
 			"insertion_window_start_norm": 0.75,
 			"insertion_dv_required": 2650.0,
 			"target_palette": "mars",
-			"brief": "Marte: Sol a 1.52 UA (43% de luz) y Tierra a ~1.50 UA (44% de enlace). El XEN-9 ficticio añade 60 W al encenderse. Equilibra lanzador, antena para 144 MB (IR + SAR >=400 pts), honda en Venus y captura orbital a 180°. AYUDA explica las escalas de juego.",
-			"brief_en": "Mars: Sun at 1.52 AU (43% light) & Earth at ~1.50 AU (44% link). Fictional XEN-9 draws 60 W firing. Balance launcher, dish for 144 MB (IR + SAR >=400 pts), Venus assist & 180° orbit capture. HELP explains game scales.",
+			"brief": "Marte: Sol 1.52 UA (43% luz; SRP 1358 W/m² en GMAT) y Tierra ~1.50 UA. Análogo NASA: MAVEN / Dawn. Equilibra XEN-9 (60 W), enlace para 144 MB (IR+SAR >=400 pts), honda en Venus y captura orbital 180°.",
+			"brief_en": "Mars: Sun 1.52 AU (43% light; GMAT SRP 1358 W/m²) & Earth ~1.50 AU. NASA analogue: MAVEN / Dawn. Balance XEN-9 (60 W), dish for 144 MB (IR+SAR >=400 pts), Venus assist & 180° orbit capture.",
 		}),
 	]

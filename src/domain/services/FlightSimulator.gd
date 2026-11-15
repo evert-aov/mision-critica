@@ -14,6 +14,7 @@ const FLIGHT_HOURS_PER_REAL_SEC: float = 0.06
 const AUTO_MAX_STEP_S: float = 1.0 / 60.0
 
 var automatic_enabled: bool = false
+var autopilot_used: bool = false
 var automatic_action: String = "Control manual"
 var _autopilot := MissionAutopilot.new()
 
@@ -317,6 +318,8 @@ func set_automatic_enabled(enabled: bool) -> void:
 	if telemetry.status != FlightTelemetry.Status.IN_FLIGHT:
 		return
 	automatic_enabled = enabled
+	if enabled:
+		autopilot_used = true
 	set_throttle(0.0)
 	set_manual_rotation(0.0)
 	stabilize_attitude()
