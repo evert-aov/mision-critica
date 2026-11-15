@@ -1,15 +1,51 @@
 @tool
 class_name ProbeBlueprintView
 extends Control
-## Schematic pixel-art preview of the probe that updates live as parts are added/removed.
+## Schematic CAD pixel-art preview of the probe and its Launch Vehicle Fairing Envelope
+## in AssemblyScreen. Highlights mass or fairing-module structural overload in red.
 
 var _design: ProbeDesign
-var _textures: Dictionary = {}
+var _anim_t: float = 0.0
+var _zoom: float = 1.0
+var _pan := Vector2.ZERO
+var _dragging: bool = false
 
 
 func _ready() -> void:
 	texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	_preload_textures()
+	clip_contents = true
+	tooltip_text = Loc.pick(
+		"Rueda: zoom. Arrastrar con clic izquierdo: mover. Clic central: centrar.",
+		"Wheel: zoom. Left drag: pan. Middle click: center."
+	)
+	mouse_default_cursor_shape = Control.CURSOR_MOVE
+	if not Engine.is_editor_hint():
+		GameState.language_changed.connect(func(_lang: String):
+			tooltip_text = Loc.pick(
+				"Rueda: zoom. Arrastrar con clic izquierdo: mover. Clic central: centrar.",
+				"Wheel: zoom. Left drag: pan. Middle click: center."
+			)
+			queue_redraw()
+		)
+
+
+func _gui_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton:
+		if event.pressed and event.button_index in [MOUSE_BUTTON_WHEEL_UP, MOUSE_BUTTON_WHEEL_DOWN]:
+			_zoom = clampf(_zoom + (0.1 if event.button_index == MOUSE_BUTTON_WHEEL_UP else -0.1), 0.7, 2.0)
+			accept_event()
+		elif event.button_index == MOUSE_BUTTON_LEFT:
+			_dragging = event.pressed
+			accept_event()
+		elif event.pressed and event.button_index == MOUSE_BUTTON_MIDDLE:
+			_zoom = 1.0
+			_pan = Vector2.ZERO
+			accept_event()
+	elif event is InputEventMouseMotion and _dragging:
+		_pan += event.relative
+		_pan = _pan.clamp(-size * 0.5, size * 0.5)
+		accept_event()
+	queue_redraw()
 
 
 func set_design(design: ProbeDesign) -> void:
@@ -17,106 +53,94 @@ func set_design(design: ProbeDesign) -> void:
 	queue_redraw()
 
 
-func _preload_textures() -> void:
-	var bus_path := "res://assets/sprites/parts/probe_bus.png"
-	if ResourceLoader.exists(bus_path):
-		_textures["bus"] = load(bus_path)
-	for part in PartCatalog.create_all():
-		var path := "res://assets/sprites/parts/%s.png" % part.texture_key
-		if ResourceLoader.exists(path):
-			_textures[part.id] = load(path)
+func _process(delta: float) -> void:
+	if Engine.is_editor_hint():
+		return
+	_anim_t += delta
+	queue_redraw()
 
 
 func _draw() -> void:
 	var w: float = size.x
 	var h: float = size.y
 
-	# Blueprint CRT grid (integer pixel alignment)
+	# Subtle CRT CAD grid
 	var step: int = 16
 	for gx in range(0, int(w), step):
-		draw_line(Vector2(gx, 0), Vector2(gx, h), Color(0.10, 0.30, 0.22, 0.45), 1.0)
+		draw_line(Vector2(gx, 0), Vector2(gx, h), Color(0.08, 0.26, 0.18, 0.42), 1.0)
 	for gy in range(0, int(h), step):
-		draw_line(Vector2(0, gy), Vector2(w, gy), Color(0.10, 0.30, 0.22, 0.45), 1.0)
+		draw_line(Vector2(0, gy), Vector2(w, gy), Color(0.08, 0.26, 0.18, 0.42), 1.0)
 
-	# Centerline axis
 	var cx: float = floorf(w * 0.5)
-	var cy: float = floorf(h * 0.44)
-	draw_line(Vector2(cx, 8), Vector2(cx, h - 8), Color(0.25, 0.90, 0.50, 0.22), 1.0)
+	var cy: float = floorf(h * 0.50)
 
-	if _design == null:
-		return
+	# Engineering center axes
+	draw_line(Vector2(cx, 16), Vector2(cx, h - 18), Color(0.25, 0.90, 0.50, 0.20), 1.0)
+	draw_line(Vector2(8, cy), Vector2(w - 8, cy), Color(0.25, 0.90, 0.50, 0.14), 1.0)
 
-	var tanks: Array[PartSpec] = _design.get_parts_by_category(PartSpec.Category.TANK)
-	var engines: Array[PartSpec] = _design.get_parts_by_category(PartSpec.Category.PROPULSION)
-	var energy: Array[PartSpec] = _design.get_parts_by_category(PartSpec.Category.ENERGY)
-	var instruments: Array[PartSpec] = _design.get_parts_by_category(PartSpec.Category.INSTRUMENT)
+	var lv: LaunchVehicleSpec = _design.get_launch_vehicle() if _design != null else null
+	var wet_mass: float = RocketMath.calculate_wet_mass_kg(_design) if _design != null else 120.0
+	var mod_cnt: int = _design.get_total_module_count() if _design != null else 0
+	var mod_over: bool = lv != null and mod_cnt > lv.max_fairing_modules
+	var mass_over: bool = lv != null and wet_mass > lv.max_payload_kg
+	var overloaded: bool = mod_over or mass_over
 
-	var solar_parts: Array[PartSpec] = []
-	var battery_parts: Array[PartSpec] = []
-	for e in energy:
-		if e.power_gen_w > 0.0:
-			solar_parts.append(e)
-		else:
-			battery_parts.append(e)
+	# Launch Vehicle Payload Fairing Envelope (aerodynamic ogive cone + cylindrical shroud)
+	var fair_half_w: float = 56.0
+	if lv != null:
+		if lv.id == "lv_medium":
+			fair_half_w = 68.0
+		elif lv.id == "lv_heavy":
+			fair_half_w = 80.0
+	fair_half_w = minf(fair_half_w, w * 0.5 - 10.0)
 
-	# 1. Draw Solar Panels extending left/right from bus
-	for i in range(solar_parts.size()):
-		var p: PartSpec = solar_parts[i]
-		var tex: Texture2D = _textures.get(p.id)
-		if tex == null:
-			continue
-		var side: float = -1.0 if (i % 2 == 0) else 1.0
-		var tier: int = i / 2
-		var px: float = cx + side * (28.0 + tier * 24.0) - 12.0
-		var py: float = cy - 12.0
-		draw_line(Vector2(cx, cy), Vector2(px + 12.0, py + 12.0), Color("a8b4c6"), 2.0)
-		draw_texture_rect(tex, Rect2(Vector2(px, py), Vector2(24, 24)), false)
+	var f_col: Color = Color(0.94, 0.28, 0.28, 0.78) if overloaded else Color(0.25, 0.78, 0.94, 0.40)
+	var nose_y: float = 18.0
+	var shoulder_y: float = 54.0
+	var base_y: float = h - 22.0
+	draw_line(Vector2(cx, nose_y), Vector2(cx - fair_half_w, shoulder_y), f_col, 1.0)
+	draw_line(Vector2(cx, nose_y), Vector2(cx + fair_half_w, shoulder_y), f_col, 1.0)
+	draw_line(Vector2(cx - fair_half_w, shoulder_y), Vector2(cx - fair_half_w, base_y), f_col, 1.0)
+	draw_line(Vector2(cx + fair_half_w, shoulder_y), Vector2(cx + fair_half_w, base_y), f_col, 1.0)
+	# Payload adapter ring at base of fairing
+	draw_rect(Rect2(cx - 26.0, base_y - 3.0, 52.0, 4.0), f_col)
 
-	# 2. Draw Tanks stacked below bus
-	var stack_y: float = cy + 20.0
-	for i in range(tanks.size()):
-		var t: PartSpec = tanks[i]
-		var tex: Texture2D = _textures.get(t.id)
-		if tex != null:
-			draw_texture_rect(tex, Rect2(Vector2(cx - 12.0, stack_y), Vector2(24, 24)), false)
-		stack_y += 22.0
+	# Auto-fit scale so large multi-tank/solar configurations fit inside the CAD frame
+	var bounds: Vector2 = ProbeVisualRenderer.compute_vertical_bounds(_design)
+	var scale_x: float = (w - 26.0) / maxf(bounds.x, 1.0)
+	var scale_y: float = (h - 52.0) / maxf(bounds.y, 1.0)
+	var fit_scale: float = clampf(minf(scale_x, scale_y), 0.62, 2.40)
 
-	# 3. Draw Engines below tanks (side-by-side if 2)
-	if not engines.is_empty():
-		var eng_count: int = engines.size()
-		var spacing: float = 26.0
-		var start_x: float = cx - ((eng_count - 1) * spacing * 0.5) - 12.0
-		for i in range(eng_count):
-			var eng: PartSpec = engines[i]
-			var tex: Texture2D = _textures.get(eng.id)
-			if tex != null:
-				draw_texture_rect(tex, Rect2(Vector2(start_x + i * spacing, stack_y), Vector2(24, 24)), false)
+	draw_set_transform(Vector2(cx, cy + 2.0) + _pan, 0.0, Vector2.ONE * fit_scale * _zoom)
+	ProbeVisualRenderer.draw_vertical(self, Vector2.ZERO, _design, _anim_t)
+	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 
-	# 4. Draw Core Probe Bus (central)
-	var bus_tex: Texture2D = _textures.get("bus")
-	if bus_tex != null:
-		draw_texture_rect(bus_tex, Rect2(Vector2(cx - 24.0, cy - 24.0), Vector2(48, 48)), false)
+	# Top & Bottom CAD captions inside CRT
+	var font: Font = ThemeFactory.get_ui_font()
+	var font_size: int = ThemeFactory.get_ui_font_size()
+	if font != null:
+		var lv_tag: String = Loc.pick("SIN COHETE SELECCIONADO", "NO LAUNCHER SELECTED")
+		if lv != null:
+			lv_tag = Loc.pick("COFIA %s: %d/%d MÓD", "FAIRING %s: %d/%d MOD") % [lv.short_name, mod_cnt, lv.max_fairing_modules]
+		draw_string(
+			font,
+			Vector2(6, 17),
+			lv_tag,
+			HORIZONTAL_ALIGNMENT_LEFT,
+			w - 12,
+			font_size,
+			ThemeFactory.COL_RED if (lv == null or mod_over) else ThemeFactory.COL_CYAN
+		)
 
-	# 5. Draw Batteries on lower-side structural bays
-	for i in range(battery_parts.size()):
-		var b: PartSpec = battery_parts[i]
-		var tex: Texture2D = _textures.get(b.id)
-		if tex == null:
-			continue
-		var side: float = -1.0 if (i % 2 == 0) else 1.0
-		var row: int = i / 2
-		var bx: float = cx + side * 28.0 - 8.0
-		var by: float = cy + 16.0 + row * 18.0
-		draw_texture_rect(tex, Rect2(Vector2(bx, by), Vector2(16, 16)), false)
-
-	# 6. Draw Scientific Instruments on top payload deck
-	if not instruments.is_empty():
-		var inst_count: int = instruments.size()
-		var spacing: float = 26.0
-		var start_x: float = cx - ((inst_count - 1) * spacing * 0.5) - 10.0
-		for i in range(inst_count):
-			var inst: PartSpec = instruments[i]
-			var tex: Texture2D = _textures.get(inst.id)
-			if tex != null:
-				draw_line(Vector2(cx, cy - 18.0), Vector2(start_x + i * spacing + 10.0, cy - 38.0), Color("40e880"), 1.0)
-				draw_texture_rect(tex, Rect2(Vector2(start_x + i * spacing, cy - 52.0), Vector2(20, 20)), false)
+		var mass_tag: String = Loc.pick("MASA: %.0f kg", "MASS: %.0f kg") % wet_mass
+		if lv != null:
+			mass_tag = Loc.pick("CARGA: %.0f / %.0f kg", "PAYLOAD: %.0f / %.0f kg") % [wet_mass, lv.max_payload_kg]
+		draw_string(
+			font,
+			Vector2(6, h - 6),
+			mass_tag,
+			HORIZONTAL_ALIGNMENT_LEFT,
+			w - 12,
+			font_size,
+			ThemeFactory.COL_RED if mass_over else ThemeFactory.COL_GREEN
+		)

@@ -1,12 +1,143 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene format=3 uid="uid://b2n3smf338yg"]
 
-[ext_resource type="Script" path="res://src/presentation/screens/AssemblyScreen.gd" id="1"]
+[ext_resource type="Script" uid="uid://c7xbf7ocyqx4" path="res://src/presentation/screens/AssemblyScreen.gd" id="1"]
+[ext_resource type="Texture2D" uid="uid://c47q06la7v36c" path="res://assets/sprites/ui/btn_disabled.png" id="1_ocl6d"]
+[ext_resource type="Texture2D" uid="uid://dydro3d2r2670" path="res://assets/sprites/ui/btn_hover.png" id="2_su3mf"]
+[ext_resource type="Texture2D" uid="uid://cpas33p0kt5cl" path="res://assets/sprites/ui/btn_normal.png" id="3_tuv7l"]
+[ext_resource type="Texture2D" uid="uid://c54oweesgbmyj" path="res://assets/sprites/ui/btn_pressed.png" id="4_55o44"]
+[ext_resource type="Texture2D" uid="uid://bnssbm1vxwik1" path="res://assets/sprites/ui/panel_crt.png" id="5_ppb0l"]
+[ext_resource type="Texture2D" uid="uid://ctaudv80tefer" path="res://assets/sprites/ui/panel_metal.png" id="6_axfdg"]
+[ext_resource type="FontFile" uid="uid://5x36ecr2fp8n" path="res://assets/fonts/pixel_5x7.fnt" id="7_e2clq"]
 
-[node name="AssemblyScreen" type="Control"]
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_ocl6d"]
+content_margin_left = 4.0
+content_margin_top = 2.0
+content_margin_right = 4.0
+content_margin_bottom = 2.0
+texture = ExtResource("1_ocl6d")
+texture_margin_left = 4.0
+texture_margin_top = 4.0
+texture_margin_right = 4.0
+texture_margin_bottom = 4.0
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_su3mf"]
+content_margin_left = 4.0
+content_margin_top = 2.0
+content_margin_right = 4.0
+content_margin_bottom = 2.0
+texture = ExtResource("2_su3mf")
+texture_margin_left = 4.0
+texture_margin_top = 4.0
+texture_margin_right = 4.0
+texture_margin_bottom = 4.0
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_tuv7l"]
+content_margin_left = 4.0
+content_margin_top = 2.0
+content_margin_right = 4.0
+content_margin_bottom = 2.0
+texture = ExtResource("3_tuv7l")
+texture_margin_left = 4.0
+texture_margin_top = 4.0
+texture_margin_right = 4.0
+texture_margin_bottom = 4.0
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_55o44"]
+content_margin_left = 4.0
+content_margin_top = 2.0
+content_margin_right = 4.0
+content_margin_bottom = 2.0
+texture = ExtResource("4_55o44")
+texture_margin_left = 4.0
+texture_margin_top = 4.0
+texture_margin_right = 4.0
+texture_margin_bottom = 4.0
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_ppb0l"]
+content_margin_left = 5.0
+content_margin_top = 5.0
+content_margin_right = 5.0
+content_margin_bottom = 5.0
+texture = ExtResource("5_ppb0l")
+texture_margin_left = 6.0
+texture_margin_top = 6.0
+texture_margin_right = 6.0
+texture_margin_bottom = 6.0
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_axfdg"]
+content_margin_left = 6.0
+content_margin_top = 6.0
+content_margin_right = 6.0
+content_margin_bottom = 6.0
+texture = ExtResource("6_axfdg")
+texture_margin_left = 6.0
+texture_margin_top = 6.0
+texture_margin_right = 6.0
+texture_margin_bottom = 6.0
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_e2clq"]
+bg_color = Color(0.047058824, 0.07058824, 0.10980392, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.22745098, 0.27450982, 0.36078432, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_r3c84"]
+bg_color = Color(0.2509804, 0.9098039, 0.5019608, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_7fduu"]
+bg_color = Color(0.18039216, 0.49019608, 0.35686275, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ykdgd"]
+bg_color = Color(0.2509804, 0.9098039, 0.5019608, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_cch0v"]
+bg_color = Color(0.972549, 0.72156864, 0.21960784, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_h8a50"]
+content_margin_left = 6.0
+content_margin_right = 0.0
+bg_color = Color(0.02745098, 0.047058824, 0.07058824, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.14117648, 0.20392157, 0.27450982, 1)
+
+[sub_resource type="Theme" id="Theme_5f8b0"]
+default_font = ExtResource("7_e2clq")
+default_font_size = 8
+Button/colors/font_color = Color(0.9254902, 0.9490196, 0.972549, 1)
+Button/colors/font_disabled_color = Color(0.4, 0.4392157, 0.5019608, 1)
+Button/colors/font_hover_color = Color(0.2509804, 0.78431374, 0.9411765, 1)
+Button/colors/font_pressed_color = Color(0.972549, 0.72156864, 0.21960784, 1)
+Button/styles/disabled = SubResource("StyleBoxTexture_ocl6d")
+Button/styles/focus = SubResource("StyleBoxTexture_su3mf")
+Button/styles/hover = SubResource("StyleBoxTexture_su3mf")
+Button/styles/normal = SubResource("StyleBoxTexture_tuv7l")
+Button/styles/pressed = SubResource("StyleBoxTexture_55o44")
+Label/colors/font_color = Color(0.9254902, 0.9490196, 0.972549, 1)
+Panel/styles/panel = SubResource("StyleBoxTexture_ppb0l")
+PanelContainer/styles/panel = SubResource("StyleBoxTexture_axfdg")
+ProgressBar/colors/font_color = Color(0.9254902, 0.9490196, 0.972549, 1)
+ProgressBar/styles/background = SubResource("StyleBoxFlat_e2clq")
+ProgressBar/styles/fill = SubResource("StyleBoxFlat_r3c84")
+VScrollBar/styles/grabber = SubResource("StyleBoxFlat_7fduu")
+VScrollBar/styles/grabber_highlight = SubResource("StyleBoxFlat_ykdgd")
+VScrollBar/styles/grabber_pressed = SubResource("StyleBoxFlat_cch0v")
+VScrollBar/styles/scroll = SubResource("StyleBoxFlat_h8a50")
+
+[node name="AssemblyScreen" type="Control" unique_id=1028245529]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+offset_left = 2.0
+offset_top = 1.0
+offset_right = 2.0
+offset_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+theme = SubResource("Theme_5f8b0")
 script = ExtResource("1")

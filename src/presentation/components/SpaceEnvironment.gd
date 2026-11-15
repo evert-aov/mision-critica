@@ -1,0 +1,75 @@
+class_name SpaceEnvironment
+extends RefCounted
+## Decorative depth cues. No collisions, force, fuel or science changes.
+
+var travel_px: float = 0.0
+var visual_speed: float = 38.0
+var elapsed_s: float = 0.0
+var _motes: Array[Vector4] = []
+var _objects: Array[Vector4] = []
+
+
+func _init() -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 91337
+	for i in range(48):
+		_motes.append(Vector4(rng.randf(), rng.randf_range(0.10, 0.92), rng.randf_range(0.4, 1.7), rng.randf_range(0.6, 1.4)))
+	for i in range(8):
+		_objects.append(Vector4(rng.randf(), rng.randf_range(0.15, 0.86), rng.randf_range(0.2, 0.95), rng.randf_range(0.0, TAU)))
+
+
+func reset() -> void:
+	travel_px = 0.0
+	visual_speed = 38.0
+	elapsed_s = 0.0
+
+
+func update(dt: float, t: FlightTelemetry, density: float) -> void:
+	if dt <= 0.0:
+		return
+	visual_speed = 38.0
+	if t.in_insertion_window:
+		var braking: float = clampf(t.insertion_dv_burned / maxf(t.insertion_dv_target, 1.0), 0.0, 1.0)
+		visual_speed = lerpf(38.0, 8.0, braking)
+	elif t.engine_firing:
+		visual_speed += 12.0 * t.throttle
+	if t.status != FlightTelemetry.Status.IN_FLIGHT:
+		visual_speed = 4.0
+	elapsed_s += dt
+	travel_px += dt * visual_speed * density
+
+
+func draw(c: CanvasItem, dimensions: Vector2, density: float, palette: String) -> void:
+	if dimensions.x <= 0.0 or dimensions.y <= 0.0:
+		return
+	for mote in _motes:
+		var x: float = fposmod(mote.x * dimensions.x - travel_px * mote.z, dimensions.x + 32.0) - 16.0
+		var point := Vector2(floorf(x), floorf(mote.y * dimensions.y))
+		var side: float = maxf(1.0, mote.w * density)
+		var color := Color(0.48, 0.62, 0.76, 0.25 + mote.z * 0.16)
+		c.draw_rect(Rect2(point, Vector2(side, maxf(1.0, side * 0.65))), color)
+		if mote.z > 1.2:
+			c.draw_line(point, point + Vector2(4.0 * density, 0), Color(color, 0.15))
+	for i in range(_objects.size()):
+		var object: Vector4 = _objects[i]
+		var x: float = fposmod(object.x * dimensions.x - travel_px * (0.22 + object.z * 0.55), dimensions.x + 160.0) - 80.0
+		var point := Vector2(x, object.y * dimensions.y + sin(elapsed_s * 0.15 + i) * 3.0)
+		var radius: float = (2.0 + object.z * 4.0) * density
+		c.draw_set_transform(point.floor(), object.w + elapsed_s * 0.04)
+		if palette == "earth" and i % 3 == 0:
+			c.draw_rect(Rect2(-radius, -radius * 0.6, radius * 2, radius * 1.2), Color("8297ad"))
+			c.draw_rect(Rect2(-radius * 3.0, -radius * 0.40, radius * 1.8, radius * 0.8), Color("244a72"))
+			c.draw_rect(Rect2(radius * 1.2, -radius * 0.40, radius * 1.8, radius * 0.8), Color("244a72"))
+		else:
+			var polygon := PackedVector2Array()
+			for vertex in range(7):
+				var angle: float = float(vertex) * TAU / 7.0
+				var roughness: float = 0.75 + sin(vertex * 7.3 + object.w) * 0.20
+				polygon.append(Vector2(cos(angle), sin(angle)) * radius * roughness)
+			c.draw_colored_polygon(polygon, Color("263440"))
+			c.draw_line(polygon[3], polygon[4], Color("586573"), 1.0)
+		c.draw_set_transform(Vector2.ZERO)
+
+
+func snapshot() -> Dictionary:
+	return {"travel_px": travel_px, "visual_speed": visual_speed, "object_count": _objects.size(), "mote_count": _motes.size()}
