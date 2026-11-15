@@ -4,11 +4,12 @@
 
 ## Empezar y aprender con el piloto automático
 
-1. Elige Tierra, Luna o Marte.
-2. Pulsa **BASE [B]** para cargar un diseño recomendado o ensambla el tuyo.
-3. Pulsa **AUTOMÁTICO [F6]** para observar cómo se opera ese diseño. **MANUAL [F5]** permite pilotarlo desde el principio.
-4. La línea **AUTO** y la bitácora explican por qué se orienta la nave, se enciende el motor o se apagan buses. El piloto despliega paneles, corrige trayectoria, captura ciencia en su ventana, transmite e inserta en órbita.
-5. Pulsa **AUTO: ON** o **M** para recuperar el control. El motor se detiene. Una orden manual de navegación, energía o ciencia también desactiva el piloto; puedes reactivarlo con el botón o **M**.
+1. Crea tu perfil de comandante **sin contraseña** (solo nombre y username) o elige un piloto guardado con **`U`**; tus avances, nivel `CML`, insignias NASA y último diseño victorioso se guardan automáticamente en `user://profiles.json`.
+2. Elige Tierra, Luna o Marte (o pulsa **CARGAR** si ya tienes una sonda victoriosa guardada para esa misión).
+3. Pulsa **BASE [B]** para cargar un diseño recomendado o ensambla el tuyo.
+4. Pulsa **AUTOMÁTICO [F6]** para observar cómo se opera ese diseño. **MANUAL [F5]** permite pilotarlo desde el principio (y concede la insignia **`PILOTO MANUAL`** al vencer sin piloto automático).
+5. La línea **AUTO** y la bitácora explican por qué se orienta la nave, se enciende el motor o se apagan buses. El piloto despliega paneles, corrige trayectoria, captura ciencia en su ventana, transmite e inserta en órbita.
+6. Pulsa **AUTO: ON** o **M** para recuperar el control. El motor se detiene. Una orden manual de navegación, energía o ciencia también desactiva el piloto; puedes reactivarlo con el botón o **M**.
 
 **AUTO opera los recursos de tu diseño:** no añade combustible, batería o instrumentos. Puedes perder si tu diseño no cubre las necesidades. **REINTENTAR** conserva el modo elegido y reinicia el vuelo.
 
@@ -20,12 +21,14 @@ Los botones indican sus atajos. **Tab** cambia el foco, el borde ámbar muestra 
 
 | Pantalla / acción | Teclado | Mouse |
 | --- | --- | --- |
-| Elegir misión | 1, 2 o 3 | Clic en DISEÑAR |
+| Elegir misión / perfil sin contraseña | 1, 2 o 3 / U | Clic en DISEÑAR, CARGAR o PILOTO |
 | Categoría de equipos | 1-6 o izquierda/derecha | Clic en pestaña |
 | Seleccionar equipo | Arriba/abajo | Clic en tarjeta |
 | Añadir/quitar | + / - | Botones +/-, doble clic añade, derecho quita; rueda sobre +/- cambia cantidad |
 | Leer catálogo e informes | Flechas para elegir equipo; rueda o teclas de lectura en ayuda | Rueda desplaza el contenido |
 | Diseño base / limpiar / volver | B / L / Esc | Botones de cabecera |
+| Idioma ES / EN | F2 (en selección y ensamblaje) | Botón `ES / EN` |
+| Informe NASA CML / Script GMAT | N (en ensamblaje) | Botón `NASA CML [N]` + EXPORTAR `.script` |
 | Lanzar manual / automático | F5 / F6 | Botones MANUAL / AUTOMÁTICO |
 | Inspeccionar plano | — | Rueda zoom, arrastrar mueve, clic central centra |
 | Girar / orientar | A/D o izquierda/derecha; 1-5 orientaciones | Clic en escena apunta hacia el puntero; botones de orientación en cabina |
@@ -35,7 +38,7 @@ Los botones indican sus atajos. **Tab** cambia el foco, el borde ámbar muestra 
 | Paneles / RCS | P / R | Botones de cabina |
 | Buses maestro / radio / ciencia | F2 / F3 / F4 | Interruptores de cabina |
 | Cámara / espectrómetro / radar | F7 / F8 / F9 | Botones de sensores |
-| AUTO / ayudas visuales | M / V | Botones; clic central muestra/oculta ayudas |
+| AUTO / ayudas visuales / vista interna | M / V / K | Botones `AUTO`, `AYUDAS`, `VISTA: EXT/INT`; clic central oculta ayudas |
 | Resultado: repetir / diseño / menú | R / D / Esc | Botones del informe |
 
 Las acciones manuales recuperan el control si AUTO está activo. La rueda actúa según el área señalada: sobre listas desplaza, sobre cantidades ajusta equipos y sobre la escena o palanca cambia empuje. No activa dos acciones simultáneas.
@@ -44,7 +47,7 @@ La interfaz conserva la proporción 16:9 para que redimensionar la ventana no es
 
 ## Vista espacial 2.5D y orientación visible
 
-El vuelo reserva el **70% superior para la escena** y el **30% inferior para la cabina**. Energía, navegación y ciencia permanecen visibles en manual y automático. **V**, **AYUDAS [V]** o clic central muestra/oculta las ayudas visuales sin modificar la proporción. El informe final sustituye los controles en la franja inferior.
+El vuelo reserva el **70% superior para la escena** y el **30% inferior para la cabina**. Energía, navegación y ciencia permanecen visibles en manual y automático. **`K`** (o botón **`VISTA: EXT/INT [K]`**) alterna entre la vista externa con pulsos animados de avance sobre la trayectoria y una **vista interna en primera persona** adaptada al modelo real de tu nave (*Cúpula Compacta* para CubeSat/Vega-C, *Bahía Exploradora* para Ariane-62 y *Puente Espacio Profundo* para Vulcan/XEN-9), donde ves asomar tus paneles solares, antena HGA (`Banda-X`/`Ka`) y sensores por el ventanal, separación de cofia al despegue, chorros blancos RCS al rotar, interferencia eléctrica en los monitores durante tormentas solares y sonido filtrado dentro de la cabina (además de avisos dedicados para tapa, ventana de inserción y separación), junto al flujo 3D radial de partículas, el paneo al girar y los arcos de trayectoria hacia el destino. **V**, **AYUDAS [V]** o clic central muestra/oculta las ayudas visuales sin modificar la proporción. El informe final sustituye los controles en la franja inferior.
 
 Las partículas y objetos decorativos muestran avance por inercia aun con el motor apagado, con paralaje y menor movimiento al frenar. Desde la salida, la Tierra se reduce y queda atrás mientras el destino crece y cambia de posición de forma continua durante el crucero; el acercamiento se acentúa antes de la inserción. En LEO, también cambia el encuadre de la Tierra durante todo el arco. El Sol queda visible e ilumina las superficies; su tamaño responde a la distancia solar del escenario. Las escalas están comprimidas y los objetos ambientales no tienen colisiones ni consumen recursos.
 
@@ -129,3 +132,13 @@ Reflejados simultáneamente en la barra superior, el núcleo de aviónica de la 
 | **01** | **Órbita Baja Terrestre (LEO)** | `$115,000` | `Vega-C` (`420 kg`) | `*Cámara` (`>= 100 pts`) | `950 m/s` | Perigeo (`+150 m/s`) | Respetar límite de `420 kg` / `6` módulos, pulso TCM, descargar `32 MB` e insertar a `180°`. |
 | **02** | **Honda y Captura Lunar** | `$185,000` | `Ariane-62` (`820 kg`) | `*Cámara + *Espectro` (`>= 220 pts`) | `2,200 m/s` | Cislunar (`+400 m/s`) | Equilibrar baterías para 2 eclipses, enlace para `86 MB`, honda cislunar y frenado selenocéntrico. |
 | **03** | **Inserción en Marte (Ares-IV)** | `$260,000` | `Vulcan-H` (`1500 kg`) | `*Espectro + *Radar SAR` (`>= 400 pts`) | `3,500 m/s` | **Venus (`+650 m/s`)** | Sol a `1.52 UA` (43% de luz) y Tierra a `~1.50 UA` (44% de enlace); descargar `144 MB`, gestionar 60 W del XEN-9, tormenta y captura. |
+
+---
+
+## Marco NASA Integrado (CML, Segmentos SMD, CubeSat 101 y GMAT)
+
+- **Niveles JPL `CML 1–5` y Márgenes Team X:** en ensamblaje la consola muestra en vivo `NASA CML X/5 | M | P | RF`. Team X sugiere margen `>=35%` en masa y potencia solar para `CML 4`, además de `>=6 dB` en proximidad (LEO) y `>=3 dB` en espacio profundo (Luna/Marte).
+- **4 Segmentos de Misión NASA SMD:** `Lanzamiento`, `Espacio`, `Tierra (MOS/GDS)` y `Usuario (Ciencia)` auditables pulsando **`[N]`** (`NASA CML [N]`).
+- **Compuertas CubeSat 101:** clasificación automática de factor de forma (`1U`, `3U`, `6U-12U`, `SmallSat / ESPA <300 kg`, `Bus Espacial Medio >=300 kg`) y verificación de `MEL`, `ODAR` (`>=3%` de reserva EOL), `DITL` e integridad térmica/estructural (`TVAC` / Vibración).
+- **Misiones análogas NASA:** el catálogo e informe final conectan cada escenario con misiones reales (*PUNCH / BisonSat / Dellingr*, *CAPSTONE / Lunar Trailblazer*, *MAVEN / Mars Odyssey / Dawn*).
+- **Exportador NASA GMAT R2026a:** desde la pestaña `SCRIPT GMAT` del modal **`[N]`** puedes inspeccionar y exportar a `user://gmat_<mision>.script` un modelo real para GMAT con `DryMass`, `FuelMass`, `ForceModel` (`JGM2.cof`, `LP165P.cof`, `Mars50c.cof`), `SRP.Flux` (`1367`/`1358 W/m²`), `Nominal_Sun = 149597870.691 km` y maniobras `ImpulsiveBurn` en marco `VNB` (además de 3 plantillas de referencia en `assets/nasa_gmat/`).

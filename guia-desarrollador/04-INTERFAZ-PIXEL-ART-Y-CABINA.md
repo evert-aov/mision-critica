@@ -11,11 +11,11 @@ El aspecto retro unificado se apoya en dos piezas centrales:
    - `assets/sprites/ui/`: paneles `NinePatchRect` (`panel_metal.png`, `panel_crt.png`) y botones (`btn_normal/hover/pressed/disabled.png`).
    - `assets/sprites/cockpit/`: interruptores `toggle_{on,off}_{normal,hover,pressed}.png`, tapa abatible `cover_{open,closed}_{normal,hover}.png`, ignición, botón de despliegue, sensores y hojas de animación (`led_*_sheet.png`, `radar_sheet.png`, `spark_sheet.png`).
    - `assets/sprites/parts/` y `assets/sprites/space/`: bus central, 15 iconos de piezas (incluyendo antenas Banda-X/Ka), 3 lanzadores (`lv_light/medium/heavy`) y 3 cuerpos celestes `64x64`. Con respaldo procedural en memoria (`ThemeFactory.get_catalog_icon(...)`) si algún PNG aún no ha sido regenerado.
-   - `assets/fonts/pixel_5x7.fnt` + `pixel_5x7.png`: fuente bitmap AngelCode `5x7` (`lineHeight=8`, `xadvance=6`) con soporte completo ASCII + español (`ÁÉÍÓÚÑáéíóúñ¡¿°Δ±`).
-   - `assets/audio/*.wav`: 9 sonidos chiptune (`22050 Hz`, PCM 16-bit mono).
+   - `assets/fonts/`: fuentes bitmap AngelCode crisp `pixel_ui.fnt` (`14px`) para interfaz principal + `pixel_5x7.fnt` (`8px`) para instrumentos compactos, con soporte completo ASCII + español (`ÁÉÍÓÚÑáéíóúñ¡¿°Δ±`).
+   - `assets/audio/*.wav`: sonidos chiptune (`22050 Hz`, PCM 16-bit mono), incluyendo bucles y avisos de vuelo (`turbo`, `brake`, `cruise_hum`, `retro_hum`).
 
 2. **Fábrica de tema** ([ThemeFactory.gd](../src/presentation/theme/ThemeFactory.gd)):
-   Construye y cachea el `Theme` global (`default_font = pixel_5x7.fnt`, `default_font_size = 9`), genera en memoria los íconos faltantes (`get_catalog_icon(key)`), define barras de desplazamiento `VScrollBar` retro de `6 px` para terminales CRT, ajusta márgenes `StyleBoxTexture` compactos y provee `make_sprite_frames(...)`.
+   Construye y cachea el `Theme` global (`default_font = pixel_ui.fnt` a `14px` o fallback `2x` sobre `pixel_5x7.fnt`), conserva `get_compact_theme()` a `8px` (`1:1`), genera en memoria los íconos faltantes (`get_catalog_icon(key)`), define barras de desplazamiento `VScrollBar` retro de `6 px` para terminales CRT, ajusta márgenes `StyleBoxTexture` compactos y provee `make_sprite_frames(...)`.
 
 3. **Renderizador unificado de sonda** ([ProbeVisualRenderer.gd](../src/presentation/components/ProbeVisualRenderer.gd)):
    Dibuja el `ProbeDesign` exacto ensamblado por el jugador (bus octogonal MLI dorado, antena parabólica diferenciada para Banda-S/X/Ka, tanques, motores, alas fotovoltaicas, baterías e instrumentos) tanto en orientación vertical CAD dentro del envolvente de cofia (`ProbeBlueprintView`) como en rotación 360° en vuelo (`ViewportWindow`).
@@ -25,19 +25,20 @@ El aspecto retro unificado se apoya en dos piezas centrales:
 Todas las pantallas y widgets usan `@tool` con guardas `Engine.is_editor_hint()` para renderizarse también en la pestaña **2D** del editor de Godot, y emplean contenedores con `clip_contents = true` y `ScrollContainer` en todas las terminales de texto para evitar desbordes:
 
 - **`Main.tscn` / [Main.gd](../src/presentation/screens/Main.gd)**: Enrutador raíz que escucha `GameState.phase_changed`, instancia la pantalla activa y fija el color de fondo `RenderingServer.set_default_clear_color(ThemeFactory.COL_BG)`. (`MISSION_RESULT` no reemplaza la escena porque `CockpitScreen` muestra el informe en la franja inferior).
-- **`MissionSelectScreen.tscn` / [MissionSelectScreen.gd](../src/presentation/screens/MissionSelectScreen.gd)**: Fondo estelar, cabecera con botón de silencio (`AudioManager`), 3 tarjetas de misión basadas en `PanelContainer` + `ScrollContainer` para briefings extensos y récords científicos.
+- **`MissionSelectScreen.tscn` / [MissionSelectScreen.gd](../src/presentation/screens/MissionSelectScreen.gd)**: Fondo estelar, cabecera con selector de perfil sin contraseña (`PILOTO: @username [U]`), botón de silencio (`AudioManager`), 3 tarjetas de misión con globos `PlanetBodyView` animados en vivo, `ScrollContainer` para briefings con análogo NASA, récords con `CML`/insignias y botón `CARGAR` cuando existe un diseño victorioso guardado.
 - **`AssemblyScreen.tscn` / [AssemblyScreen.gd](../src/presentation/screens/AssemblyScreen.gd)**:
   - `MarginContainer` y `VBoxContainer` separan acciones, título de misión, cuerpo y ayuda de controles. El `HBoxContainer` del cuerpo reparte catálogo, plano y balance con proporciones 1.12/1/1.08.
   - Catálogo: 6 pestañas (1-6), tarjetas seleccionables con nombres y descripción ajustados, flechas para elegir y +/- para cantidad. `ScrollContainer` mantiene visible el elemento seleccionado. Rueda en lista desplaza y sobre +/- ajusta cantidades; doble clic equipa y derecho quita.
   - Plano: `ProbeBlueprintView` conserva el contorno de cofia y alertas; rueda controla zoom, arrastre desplaza la nave y clic central centra.
-  - Balance: indicadores, terminal desplazable y botones MANUAL [F5]/AUTOMÁTICO [F6]. BASE [B], LIMPIAR [L] y MISIONES [Esc] quedan en la fila de acciones.
+  - Balance: indicadores (incluyendo resumen en vivo `NASA CML | M | P | RF`), terminal desplazable y botones MANUAL [F5]/AUTOMÁTICO [F6]. NASA CML [N], AYUDA [F1], ES/EN [F2], BASE [B], LIMPIAR [L] y MISIONES [Esc] quedan en la fila de acciones. `[N]` abre un modal con el informe completo JPL CML / 4 Segmentos / CubeSat 101 y el generador/exportador de `.script` para NASA GMAT R2026a (`user://gmat_<id>.script`).
 - **`CockpitScreen.tscn` / [CockpitScreen.gd](../src/presentation/screens/CockpitScreen.gd)**:
-  `FlightLayout.calculate` reparte la altura útil en 70% de escena y 30% de cabina, con márgenes de 8 px y separación de 6 px. En 1280×720, la escena mide 1264×488 y la cabina 1264×210. `set_guidance_visible(bool)` y V muestran/ocultan ayudas sin cambiar esa composición. La cabina usa un HBox con resumen, energía, navegación, ciencia y acciones; los instrumentos conservan fuente compacta de 8 px. Inyecta `sim.design`, actualiza `sim.step(delta)` y modula audio. Tras finalizar, solo avanza la animación visual, no la simulación.
+  `FlightLayout.calculate` reparte la altura útil en 70% de escena y 30% de cabina, con márgenes de 8 px y separación de 6 px. En 1280×720, la escena mide 1264×488 y la cabina 1264×210. `set_guidance_visible(bool)` y `V` muestran/ocultan ayudas y `set_internal_view(bool)` / `K` (`VISTA: EXT/INT [K]`) alternan entre vista espacial externa y vista interna por modelo (`InternalCabinRenderer`, incluyendo audio filtrado `AudioManager.set_internal_audio_mode` y SFX para tapa, ventana de inserción y separación de cofia) sin cambiar esa composición. La cabina usa un HBox con resumen, energía, navegación, ciencia y acciones; los instrumentos conservan fuente compacta de 8 px. Inyecta `sim.design`, actualiza `sim.step(delta)` y modula audio. Tras finalizar, solo avanza la animación visual, no la simulación.
 
 ## Componentes de cabina (`src/presentation/components/`)
 
 | Componente | Archivo | Elementos Godot clave |
 | --- | --- | --- |
+| `InternalCabinRenderer` | [InternalCabinRenderer.gd](../src/presentation/components/InternalCabinRenderer.gd) | Dibuja interiores diferenciados según el `ProbeDesign` armado (`compact`, `explorer`, `deep_space`), monitores laterales vivos y piezas externas visibles desde el ventanal (paneles, HGA, sensores). |
 | `ProbeVisualRenderer` | [ProbeVisualRenderer.gd](../src/presentation/components/ProbeVisualRenderer.gd) | Renderizado procedural pixel-art de `ProbeDesign` en vista vertical (ensamblaje) y horizontal (vuelo con despliegue solar y pluma de motor). |
 | `ViewportWindow` | [ViewportWindow.gd](../src/presentation/components/ViewportWindow.gd) | HUD adaptable, cronómetro, etapas, explicaciones, alertas y escena `MissionSpaceView`. |
 | `FlightLayout` | [FlightLayout.gd](../src/presentation/components/FlightLayout.gd) | Distribución proporcional 70/30 de escena y cabina. |
@@ -48,7 +49,7 @@ Todas las pantallas y widgets usan `@tool` con guardas `Engine.is_editor_hint()`
 | `PowerPanel` | [PowerPanel.gd](../src/presentation/components/PowerPanel.gd) | Sub-paneles CRT empotrados con 3 `TextureButton` de buses, 4 `AnimatedSprite2D` LEDs, `_BatteryDial` analógico (`E`–`F`) y despliegue solar. |
 | `NavigationConsole` | [NavigationConsole.gd](../src/presentation/components/NavigationConsole.gd) | `_CRTDisplay` con corredor verde de $\Delta v$, terminal de bitácora con `ScrollContainer` auto-desplazable, palanca `_ThrottleLever` y botón de ignición con tapa abatible. |
 | `SciencePanel` | [SciencePanel.gd](../src/presentation/components/SciencePanel.gd) | Radar `AnimatedSprite2D`, terminal CRT con `ScrollContainer` que aloja los 3 sensores (`TextureButton` + `ProgressBar`) y el registro de paquetes capturados/transmitidos. |
-| `MissionResultOverlay` | [MissionResultOverlay.gd](../src/presentation/components/MissionResultOverlay.gd) | Informe ajustado al 30% inferior, con bitácora desplazable y botones REPETIR, DISEÑO y MENÚ; deja visible el destino. |
+| `MissionResultOverlay` | [MissionResultOverlay.gd](../src/presentation/components/MissionResultOverlay.gd) | Informe ajustado al 30% inferior, con bitácora desplazable, sección de referencia NASA (`CML`, `ODAR EOL` y misión análoga) y botones REPETIR, DISEÑO y MENÚ; deja visible el destino. |
 
 ## Composición 2.5D y resultados
 

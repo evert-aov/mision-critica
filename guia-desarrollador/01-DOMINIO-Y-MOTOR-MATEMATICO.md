@@ -57,3 +57,13 @@ Implementadas como métodos estáticos puros en [RocketMath.gd](../src/domain/se
 Verifica de forma integral las **9 exigencias contrapuestas**:
 - **Errores bloqueantes**: falta lanzador (`require_launch_vehicle`), `wet_mass_kg > lv.max_payload_kg`, `module_count > lv.max_fairing_modules`, `cost > mission.budget`, falta motor o tanque, falta algún instrumento en `mission.required_instruments` o `max_science < mission.min_science_required`.
 - **Advertencias operativas**: $\Delta v$ total insuficiente (aun con crédito de honda), `TWR < min_twr`, balance eléctrico negativo en `distance_au` o descarga acelerada demasiado lenta frente al tiempo de tránsito.
+
+## Marco de Ingeniería NASA y GMAT (`NasaMissionFramework`)
+
+Implementado en dominio puro ([NasaMissionFramework.gd](../src/domain/services/NasaMissionFramework.gd), `RefCounted`) sin acoplamiento a UI:
+
+- **`assess(design, mission, telemetry = null)`**:
+  - Evalúa **JPL CML 1–5** y márgenes Team X (`35.0%` en masa lanzador y energía solar; `6.0 dB` en proximidad LEO y `3.0 dB` en espacio profundo; `3.0%` de reserva EOL para `ODAR`).
+  - Construye los **4 Segmentos NASA SMD** (*Launch*, *Space*, *Ground MOS/GDS*, *User Science*), la clase CubeSat 101 (`1U` `<=1.33 kg`, `3U` `<=4 kg`, `6U-12U` `<=24 kg`, `SmallSat / ESPA <300 kg`, `Bus >=300 kg`) y las compuertas `MEL / ODAR / DITL / TVAC`.
+  - Mapea cada escenario a misiones reales NASA (`PUNCH / BisonSat / Dellingr`, `CAPSTONE / Lunar Trailblazer`, `MAVEN / Mars Odyssey / Dawn`).
+- **`generate_gmat_script(design, mission)`**: genera un script **NASA GMAT R2026a** listo para análisis (`Create Spacecraft Probe`, `ForceModel` con `JGM2.cof`/`LP165P.cof`/`Mars50c.cof`, `SRP.Flux` `1367`/`1358`, `Nominal_Sun = 149597870.691` y quemados `ImpulsiveBurn` en coordenadas `VNB`).

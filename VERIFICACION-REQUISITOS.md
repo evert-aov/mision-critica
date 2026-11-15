@@ -1,6 +1,6 @@
 # Verificación del reto Space Mission Design Game
 
-Actualización: 14 de noviembre de 2026, con correcciones, ayuda educativa, modo automático, escena 2.5D y controles de teclado/mouse.
+Actualización: 15 de noviembre de 2026, con marco de ingeniería NASA integrado (`CML 1–5`, 4 Segmentos SMD, CubeSat 101 y generador/exportador GMAT R2026a), soporte bilingüe ES/EN (`F2`), tipografía crisp `pixel_ui.fnt` y audio ampliado de vuelo.
 
 ## Dictamen
 
@@ -31,8 +31,9 @@ Se corrigió el caso de prueba que fallaba y se añadieron regresiones para unid
 | Modo automático | Cumple | Opera comandos ordinarios, gasta recursos, respeta validación y fallos, y permite recuperar control manual. |
 | Cooperación hasta cuatro participantes | No implementada; opcional | Sin sesiones, roles ni sincronización. |
 | Eventos inesperados | Parcial; opcional | Eclipses y tormentas prefijados, simulación determinista. |
-| Informe final | Cumple en pantalla | Métricas, causa de fallo, sugerencias y bitácora; sin exportación. |
-| Guardar/compartir/comparar | No implementado; opcional | Récords de sesión en memoria. |
+| Informe final | Cumple con exportación GMAT | Métricas, causa de fallo, sugerencias, bitácora, referencia NASA / misión análoga y exportación de trayectoria `.script` desde ensamblaje (`[N]`). |
+| Estándares NASA (CML / Segmentos / CubeSat 101 / GMAT) | Cumple en modelo educativo integrado | Auditoría JPL `CML 1–5`, márgenes Team X (`35%` masa/energía, `3/6 dB` radio), 4 Segmentos SMD, compuertas `MEL/ODAR/DITL/TVAC` y generador NASA GMAT R2026a (`assets/nasa_gmat/` + exportador vivo). |
+| Guardar/compartir/comparar | Cumple en almacenamiento local | Perfiles sin contraseña (nombre y `@username`) persistidos en `user://profiles.json`, récords científicos, `CML`, insignias NASA y carga directa del último diseño victorioso por misión. Sin compartición en red. |
 | Rankings, competición y sandbox | No implementados; opcionales | No existen modos específicos. |
 
 El enunciado presenta cooperación y varias ampliaciones con “may consider”, “could” y “may (but are not required to)”. Su ausencia no invalida la propuesta individual.
@@ -64,8 +65,8 @@ Motor: Godot 4.7.2 Mono.
 
 | Verificación | Resultado |
 | --- | --- |
-| Suite de dominio, simulación y proyección visual | 300 correctas, 0 fallidas. |
-| Integración | 89 correctas, 0 fallidas. |
+| Suite de dominio, simulación, NASA CML/GMAT/insignias, perfiles y cabinas internas | 349 correctas, 0 fallidas. |
+| Integración completa (perfil sin contraseña, ES/EN, NASA modal `[N]`, vista interna `[K]`, audio, vuelo y persistencia) | 121 correctas, 0 fallidas. |
 | AUTO Tierra, pasos 1/60, 0.1 y 0.5 s | Victoria y 150 puntos en las tres ejecuciones. |
 | AUTO Luna, pasos 1/60, 0.1 y 0.5 s | Victoria y 400 puntos en las tres ejecuciones. |
 | AUTO Marte, pasos 1/60, 0.1 y 0.5 s | Victoria y 600 puntos en las tres ejecuciones. |

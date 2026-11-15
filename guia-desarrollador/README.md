@@ -7,7 +7,7 @@
 | Capítulo | Tema |
 | --- | --- |
 | [00 — Arquitectura y configuración](00-ARQUITECTURA-Y-CONFIGURACION.md) | Capas, regla de dependencias, ajustes pixel art en `project.godot` y Autoloads. |
-| [01 — Dominio y motor matemático](01-DOMINIO-Y-MOTOR-MATEMATICO.md) | Entidades puras, ecuación de Tsiolkovski, irradiancia solar y validación pre-vuelo. |
+| [01 — Dominio y motor matemático](01-DOMINIO-Y-MOTOR-MATEMATICO.md) | Entidades puras, ecuación de Tsiolkovski, irradiancia solar, validación pre-vuelo y marco NASA (`NasaMissionFramework`). |
 | [02 — Simulador de vuelo](02-SIMULADOR-DE-VUELO.md) | Bucle `step(dt)`, quemado de combustible, buses eléctricos, ventanas y condiciones finales. |
 | [03 — Catálogos y misiones](03-CATALOGOS-Y-MISIONES.md) | `PartCatalog`, `MissionCatalog`, `MissionData` y máquina de fases `GameState`. |
 | [04 — Interfaz pixel art y cabina](04-INTERFAZ-PIXEL-ART-Y-CABINA.md) | `ThemeFactory`, generador de assets, soporte `@tool`, pantallas y componentes de cabina. |

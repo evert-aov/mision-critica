@@ -15,13 +15,15 @@ Simulador 2D en estilo **pixel art** con escena 2.5D (`1280x720` internos; venta
 > **Documentación técnica para desarrolladores:** consulta la [**Guía del Desarrollador**](guia-desarrollador/README.md).
 > **Manual del jugador y objetivos:** consulta la [**Guía del Juego y Objetivos**](GUIA-JUEGO-Y-OBJETIVOS.md).
 
-**Primer vuelo automático:** selecciona una misión con **1-3**, pulsa **BASE [B]** y después **AUTOMÁTICO [F6]**. **MANUAL [F5]** permite pilotar. El piloto administra orientación, buses, maniobras, captura y descarga con los recursos del diseño. La cabina explica sus acciones y permite pasar a control manual con **AUTO: ON** o **M**. Los diseños inviables pueden fallar también en automático.
+**Primer vuelo automático:** crea tu perfil sin contraseña (solo nombre y username) en la pantalla inicial (`[U]` permite cambiar de piloto en cualquier momento), selecciona una misión con **1-3**, pulsa **BASE [B]** y después **AUTOMÁTICO [F6]**. **MANUAL [F5]** permite pilotar. El piloto administra orientación, buses, maniobras, captura y descarga con los recursos del diseño. Tu progreso (`CML`, récords científicos, insignias NASA y último diseño victorioso para reabrirlo con **CARGAR**) se guarda localmente en `user://profiles.json`. La cabina explica sus acciones y permite pasar a control manual con **AUTO: ON** o **M**. Los diseños inviables pueden fallar también en automático.
 
 **Ayuda educativa:** **AYUDA** abre una guía con pausa que explica unidades, compromisos de diseño, operaciones y escalas temporales. Los motores consumen electricidad proporcional al acelerador (5 W, 8 W y 60 W a plena potencia). El XEN-9 y el resto del catálogo usan valores simplificados de juego; no son especificaciones reales. El resultado añade recomendaciones según la causa del fallo.
 
-**Vista espacial 2.5D:** escena en el **70% superior** y cabina permanente en el **30% inferior**, tanto en manual como en automático. **V** o clic central muestra/oculta las ayudas. Partículas, rocas y satélites decorativos dan profundidad y movimiento incluso al viajar por inercia; el frenado reduce su velocidad visual. La Tierra se aleja y el destino crece y cambia de posición durante todo el tránsito, desde la salida y el Sol visible ilumina los cuerpos. Una brújula local y flechas de movimiento/empuje explican los giros. El informe ocupa la zona de cabina y conserva visible la órbita o deriva final. Las distancias y direcciones son esquemáticas; los objetos ambientales no afectan recursos ni provocan colisiones.
+**Vista espacial 2.5D y vista interna por modelo:** escena en el **70% superior** y cabina permanente en el **30% inferior**, tanto en manual como en automático. **`K`** (o `VISTA: INT/EXT [K]`) alterna entre la vista espacial externa —con pulsos animados que avanzan por la trayectoria hacia el destino— y una **vista interna en primera persona desde dentro de la nave**, adaptada al modelo ensamblado (*Cúpula Compacta*, *Bahía Exploradora* o *Puente Espacio Profundo*), con paneles solares, antena HGA (`Banda-X`/`Ka`), sensores visibles tras el ventanal, separación de cofia al despegue, chorros blancos RCS en esquinas al girar, estática ámbar en monitores durante tormentas solares, sonido filtrado hacia el interior de cabina (`set_internal_audio_mode`), efectos dedicados para tapa de seguridad (`cover`), ventana de inserción (`window_alert`) y separación (`separation`), estrellas con paneo real, flujo radial de avance 3D y corredor hacia el planeta. **V** o clic central muestra/oculta las ayudas. Partículas, rocas y satélites decorativos dan profundidad y movimiento incluso al viajar por inercia; el frenado reduce su velocidad visual. La Tierra se aleja y el destino crece y cambia de posición durante todo el tránsito, desde la salida y el Sol visible ilumina los cuerpos. Una brújula local y flechas de movimiento/empuje explican los giros. El informe ocupa la zona de cabina y conserva visible la órbita o deriva final. Las distancias y direcciones son esquemáticas; los objetos ambientales no afectan recursos ni provocan colisiones.
 
-**Controles e interfaz:** teclas visibles en botones, foco de teclado ámbar, listas con rueda y tarjetas con nombres/descripciones ajustados. En ensamblaje: **1-6**, flechas y **+/-**; el plano admite zoom y arrastre. En vuelo: **A/D**, **1-5**, **W/Q**, **C** y **Espacio**; clic en escena orienta, derecho estabiliza y rueda ajusta empuje (**Shift** para precisión). **F1** abre la guía completa. La ventana conserva la proporción 16:9 y el título de misión tiene su propia fila para evitar solapamientos.
+**Controles e interfaz:** teclas visibles en botones, foco de teclado ámbar, listas con rueda, soporte bilingüe **ES / EN (`F2`)** y fuente bitmap crisp `pixel_ui.fnt` (`14px`) / `pixel_5x7.fnt` (`8px`). En selección: **1-3**, **`U`** (perfiles sin contraseña), planetas `PlanetBodyView` animados en tiempo real y botón **CARGAR** cuando exista un diseño victorioso previo. En ensamblaje: **1-6**, flechas, **+/-** y **`[N]` (NASA CML / GMAT)**; el plano admite zoom y arrastre. En vuelo: **A/D**, **1-5**, **W/Q**, **T** (turbo 100%), **C**, **Espacio** y **`K`** (vista interna + audio). **F1** abre la guía completa. La ventana conserva la proporción 16:9 y el título de misión tiene su propia fila para evitar solapamientos.
+
+**Marco oficial NASA integrado:** incorpora los 4 Segmentos SMD (*Lanzamiento, Espacio, Tierra y Usuario*), los **Niveles de Madurez Conceptual JPL (`CML 1–5`)** y márgenes Team X (`>=35%` masa/potencia, `>=3/6 dB` radio), las compuertas **CubeSat 101** (`MEL`, `ODAR`, `DITL`, `TVAC`), misiones análogas reales (*PUNCH / BisonSat / Dellingr*, *CAPSTONE / Lunar Trailblazer*, *MAVEN / Dawn*) y exportación directa de scripts **NASA GMAT R2026a** (`JGM2.cof`, `LP165P.cof`, `Mars50c.cof`, `SRP.Flux`, `Nominal_Sun = 149597870.691`, maniobras `VNB`).
 
 ---
 
@@ -46,7 +48,7 @@ flowchart LR
   Data --> Domain
 ```
 
-- **`src/domain/`**: Entidades (`LaunchVehicleSpec`, `PartSpec`, `MissionSpec`, `ProbeDesign`, `FlightTelemetry`) y lógica matemática/física pura (`RocketMath`, `FlightSimulator`) en `RefCounted`, sin dependencias de UI ni del `SceneTree`.
+- **`src/domain/`**: Entidades (`LaunchVehicleSpec`, `PartSpec`, `MissionSpec`, `ProbeDesign`, `FlightTelemetry`) y lógica matemática/física pura (`RocketMath`, `NasaMissionFramework`, `FlightSimulator`, `MissionAutopilot`, `Loc`) en `RefCounted`, sin dependencias de UI ni del `SceneTree`.
 - **`src/data/`**: Catálogos estáticos (`LaunchVehicleCatalog`, `PartCatalog`, `MissionCatalog`) + Autoload `MissionData`.
 - **`src/application/`**: Orquestación de estado (`GameState`), fachada de física (`PhysicsCalculator`) y audio chiptune (`AudioManager`).
 - **`src/presentation/`**: Escenas `.tscn`, `ThemeFactory` (incluye generación procedural de íconos en memoria como respaldo), `ProbeVisualRenderer` y pantallas/componentes de cabina con terminales CRT desplazables (`ScrollContainer`).
@@ -94,18 +96,19 @@ misión-crítica/
 ├── GUIA-JUEGO-Y-OBJETIVOS.md      # Manual del juego, 9 exigencias y controles
 ├── guia-desarrollador/            # Documentación técnica modular por capítulos
 ├── assets/
-│   ├── audio/                     # Efectos chiptune (.wav)
-│   ├── fonts/                     # Fuente bitmap 5x7 (.fnt + .png)
+│   ├── audio/                     # Efectos chiptune (.wav: turbo, freno, propulsión, clics)
+│   ├── fonts/                     # Fuentes bitmap crisp pixel_ui (14px) y pixel_5x7 (8px)
+│   ├── nasa_gmat/                 # Escenarios de referencia NASA GMAT R2026a (.script)
 │   └── sprites/                   # Sprites UI, cabina, piezas y planetas
 ├── src/
 │   ├── domain/
 │   │   ├── entities/              # LaunchVehicleSpec, PartSpec, MissionSpec, ProbeDesign, FlightTelemetry
-│   │   └── services/              # RocketMath, FlightSimulator
+│   │   └── services/              # RocketMath, NasaMissionFramework, FlightSimulator, MissionAutopilot, Loc
 │   ├── data/                      # LaunchVehicleCatalog, PartCatalog, MissionCatalog, MissionData
 │   ├── application/               # GameState, PhysicsCalculator, AudioManager
 │   └── presentation/
 │       ├── theme/                 # ThemeFactory
-│       ├── components/            # Blueprint, ViewportWindow, Power, Nav, Science, Result
+│       ├── components/            # Blueprint, ViewportWindow, InternalCabinRenderer, Power, Nav, Science, Result
 │       └── screens/               # Main, MissionSelectScreen, AssemblyScreen, CockpitScreen
 ├── tests/                         # TestRunner.gd e IntegrationTest.tscn
 └── tools/                         # generate_assets.py

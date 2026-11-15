@@ -8,13 +8,13 @@
 | --- | --- |
 | `project.godot` | Configuración del motor (`1280x720` internos, ventana `1920x1080`, `Nearest`), escena principal y Autoloads. |
 | `src/domain/entities/` | Modelos puros `PartSpec`, `LaunchVehicleSpec`, `MissionSpec`, `ProbeDesign` y `FlightTelemetry`. |
-| `src/domain/services/` | Lógica física (`RocketMath`), simulación (`FlightSimulator`) y operación automática (`MissionAutopilot`). |
+| `src/domain/services/` | Lógica física (`RocketMath`), marco NASA/GMAT (`NasaMissionFramework`), simulación (`FlightSimulator`), piloto (`MissionAutopilot`) y localización (`Loc`). |
 | `src/data/` | Catálogos (`PartCatalog`, `LaunchVehicleCatalog`, `MissionCatalog`) y Autoload `MissionData`. |
 | `src/application/` | Estado de campaña (`GameState`), fachada (`PhysicsCalculator`) y audio (`AudioManager`). |
 | `src/presentation/theme/` | `ThemeFactory` (tema retro, NinePatch, SpriteFrames). |
-| `src/presentation/components/` | Plano de sonda, cabina, informe y guía educativa con pausa (`LearningOverlay`). |
-| `src/presentation/screens/` | Pantallas principales (`Main`, `MissionSelectScreen`, `AssemblyScreen`, `CockpitScreen`). |
-| `assets/` | Sprites PNG, fuente BMFont y audio WAV generados. |
+| `src/presentation/components/` | Plano de sonda, cabina, informe (`MissionResultOverlay`) y guía educativa con pausa (`LearningOverlay`). |
+| `src/presentation/screens/` | Pantallas principales (`Main`, `MissionSelectScreen`, `AssemblyScreen` con modal NASA/GMAT `[N]`, `CockpitScreen`). |
+| `assets/` | Sprites PNG, fuentes BMFont (`pixel_ui` / `pixel_5x7`), scripts GMAT de referencia (`nasa_gmat/`) y audio WAV generados. |
 | `tools/` | Script `generate_assets.py` de generación determinista de recursos. |
 | `tests/` | Suite unitaria (`TestRunner.gd`) y prueba de integración (`IntegrationTest.tscn`). |
 | `guia-desarrollador/` | Documentación técnica de arquitectura y módulos. |
