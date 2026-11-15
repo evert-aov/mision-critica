@@ -10,6 +10,11 @@ var _failed: int = 0
 func _ready() -> void:
 	print("=== RUNNING END-TO-END INTEGRATION TEST ===")
 	AudioManager.set_muted(true)
+	GameState.set_save_path("user://integration_profiles.json")
+	if FileAccess.file_exists(GameState.save_path):
+		DirAccess.remove_absolute(GameState.save_path)
+	GameState.load_profiles()
+	_assert(not GameState.has_active_profile(), "Starts without active profile when test profile store is empty")
 
 	_assert(MissionData.get_all_parts().size() == 15, "MissionData loaded 15 parts")
 	_assert(MissionData.get_all_launch_vehicles().size() == 3, "MissionData loaded 3 launch vehicles")
@@ -22,6 +27,18 @@ func _ready() -> void:
 	add_child(main_inst)
 	await get_tree().process_frame
 	_assert(GameState.current_phase == GameState.Phase.MISSION_SELECT, "Starts in MISSION_SELECT")
+	var select_start = main_inst.get("_current_view")
+	_assert(select_start._profile_backdrop.visible, "Passwordless profile registration opens for a first-time commander")
+	_assert(select_start._planet_views.size() == 3, "Mission select cards render live animated PlanetBodyView globes")
+	select_start._input_name.text = "Elena Vance"
+	select_start._input_user.text = "x"
+	select_start._btn_create_profile.pressed.emit()
+	_assert(select_start._lbl_profile_err.visible and not GameState.has_active_profile(), "Short username displays inline validation feedback")
+	select_start._input_user.text = "evance"
+	select_start._btn_create_profile.pressed.emit()
+	await get_tree().process_frame
+	_assert(GameState.has_active_profile() and GameState.active_username == "evance" and not select_start._profile_backdrop.visible, "Valid passwordless Name + Username unlocks campaign immediately")
+	_assert("@evance" in select_start._btn_profile.text, "Header displays active pilot @username")
 	await _test_keyboard_and_mouse(main_inst)
 
 	# Enter Assembly for Mars Orbit & test Launch Vehicle selection
@@ -57,6 +74,14 @@ func _ready() -> void:
 	_assert(cockpit.get_layout_snapshot() == layout, "Changing guidance preserves the 70/30 split")
 	cockpit._btn_view.pressed.emit()
 	_assert(cockpit._guidance_visible, "V restores guidance")
+	_assert(not cockpit._internal_view and cockpit._btn_cam.text == "VISTA: EXT [K]", "Cockpit starts in external 2.5D space view")
+	await _tap_key(KEY_K)
+	_assert(cockpit._internal_view and cockpit._btn_cam.text == "VISTA: INT [K]" and AudioManager.internal_audio_mode, "K toggles cockpit and cabin-muffled audio to internal spacecraft view")
+	var internal_snap: Dictionary = cockpit._viewport_win.get_scene_snapshot()
+	_assert(bool(internal_snap.get("internal_view", false)) and str(internal_snap.get("cabin_archetype", "")) == "deep_space", "Internal view snapshot reflects deep-space ion bridge model")
+	_assert(cockpit.get_layout_snapshot() == layout, "Toggling internal view preserves 70/30 layout proportions")
+	await _tap_key(KEY_K)
+	_assert(not cockpit._internal_view and not AudioManager.internal_audio_mode and not bool(cockpit._viewport_win.get_scene_snapshot().get("internal_view", true)), "Pressing K again returns cleanly to external space view and audio")
 	var sim := GameState.active_simulator
 	_assert(sim.telemetry.downlink_kbps > 0.0, "Deep-space comms downlink speed initialized")
 
@@ -108,6 +133,16 @@ func _ready() -> void:
 	_assert(not GameState.launch_mission(true), "Automatic launch still enforces design validation")
 	GameState.load_recommended_baseline()
 	_assert(not assembly._btn_auto.disabled, "A valid design enables automatic flight")
+	_assert("CML" in assembly._lbl_nasa.text, "Assembly audit displays live JPL CML and Team X margins")
+	await _tap_key(KEY_N)
+	_assert(assembly._nasa_modal.visible and "SEGMENTO" in assembly._nasa_text.text, "N key opens NASA CML, Segments, and CubeSat 101 modal")
+	assembly._nasa_tab_gmat.pressed.emit()
+	_assert("Create ForceModel FM_Mission;" in assembly._nasa_text.text and "JGM2.cof" in assembly._nasa_text.text, "NASA modal generates live GMAT R2026a script for the active spacecraft")
+	await _tap_key(KEY_F2)
+	_assert(assembly._nasa_tab_report.text == "CML REPORT", "NASA modal buttons translate cleanly to English")
+	await _tap_key(KEY_F2)
+	await _tap_key(KEY_ESCAPE)
+	_assert(not assembly._nasa_modal.visible and GameState.current_phase == GameState.Phase.ASSEMBLY, "Escape closes NASA modal without leaving Assembly")
 	await _tap_key(KEY_F6)
 	cockpit = main_inst.get("_current_view")
 	sim = GameState.active_simulator
@@ -145,6 +180,9 @@ func _ready() -> void:
 	_assert(is_equal_approx(sim.telemetry.elapsed_s, ended_at), "Final animation leaves terminal mission physics unchanged")
 	_assert(not cockpit._control_dock.visible and cockpit._result_overlay.visible, "Final report replaces the deck while keeping the space scene visible")
 	_assert("QUÉ APRENDER" in cockpit._result_overlay._lbl_details.text, "Mission report includes educational feedback")
+	_assert("REFERENCIA NASA" in cockpit._result_overlay._lbl_details.text and "PUNCH" in cockpit._result_overlay._lbl_details.text, "Mission report displays NASA analogous mission and User segment")
+	_assert("@evance" in cockpit._result_overlay._lbl_details.text, "Mission report displays active commander username and badges")
+	_assert(GameState.has_saved_design("leo_tutorial"), "Victory persists winning spacecraft design to active commander profile")
 	await _tap_key(KEY_R)
 	_assert(GameState.active_simulator != sim and GameState.active_simulator.automatic_enabled, "Retry creates a fresh mission and preserves automatic mode")
 	_assert(GameState.current_phase == GameState.Phase.FLIGHT_COCKPIT, "Retry restores the cockpit phase")
@@ -154,12 +192,20 @@ func _ready() -> void:
 
 	GameState.enter_mission_select()
 	await get_tree().process_frame
+	GameState.load_profiles()
+	await get_tree().process_frame
+	_assert(GameState.has_active_profile() and GameState.completed_missions.has("leo_tutorial") and int(GameState.completed_missions["leo_tutorial"].get("best_cml", 1)) >= 4, "Campaign CML, science record, and badges survive disk reload")
+	var reg2 := GameState.register_profile("Alex Cruz", "acruz")
+	_assert(bool(reg2["ok"]) and GameState.completed_missions.is_empty(), "Second commander profile starts with isolated campaign records")
+	_assert(GameState.switch_profile("evance") and GameState.completed_missions.has("leo_tutorial"), "Switching back restores Elena's completed campaign records")
 	var select_view = main_inst.get("_current_view")
 	await _tap_key(KEY_F2)
 	_assert(GameState.language == "en" and Loc.is_en(), "F2 in mission select toggles language to English")
 	_assert(select_view._title_lbl.text == "CRITICAL MISSION / SELECT DESTINATION" and select_view._help_btn.text == "HELP [F1]", "Mission select headers update immediately to English")
 	await _tap_key(KEY_F2)
 	_assert(GameState.language == "es" and not Loc.is_en() and select_view._help_btn.text == "AYUDA [F1]", "F2 in mission select toggles language back to Spanish")
+	if FileAccess.file_exists(GameState.save_path):
+		DirAccess.remove_absolute(GameState.save_path)
 	main_inst.queue_free()
 
 	print("=== INTEGRATION RESULTS: %d PASSED, %d FAILED ===" % [_passed, _failed])

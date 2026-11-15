@@ -24,6 +24,9 @@ func _init() -> void:
 	_test_hd_layout_and_environment_motion()
 	_test_continuous_transit_progress()
 	_test_localization_and_pixel_typography()
+	_test_nasa_framework()
+	_test_internal_cabin_archetypes()
+	_test_profiles_and_nasa_badges()
 
 	print("=== RESULTS: %d PASSED, %d FAILED ===" % [_passed, _failed])
 	quit(0 if _failed == 0 else 1)
@@ -655,3 +658,101 @@ func _test_localization_and_pixel_typography() -> void:
 	_assert_true("FIRST FLIGHT" in LearningOverlay.get_guide_text(), "Learning guide switches cleanly to English")
 	Loc.set_lang("es")
 	_assert_true("PRIMER VUELO" in LearningOverlay.get_guide_text(), "Learning guide switches back cleanly to Spanish")
+
+
+func _test_nasa_framework() -> void:
+	Loc.set_lang("es")
+	var missions := MissionCatalog.create_all()
+	var parts := PartCatalog.create_all()
+	var lvs := _get_lv_map()
+
+	var empty_design := ProbeDesign.new(parts, lvs["lv_light"])
+	var cml1: Dictionary = NasaMissionFramework.assess(empty_design, missions[0])
+	_assert_true(int(cml1["cml_level"]) == 1, "Empty design stays at JPL CML 1 (Concept)")
+	_assert_true((cml1["segments"] as Array).size() == 4, "NASA SMD framework models all 4 mission segments")
+
+	var leo_design := ProbeDesign.new(parts, lvs["lv_light"])
+	for pid in ["eng_hydrazine", "tank_small", "solar_compact", "bat_liion", "inst_cam"]:
+		leo_design.add_part(pid)
+	var leo_nasa: Dictionary = NasaMissionFramework.assess(leo_design, missions[0])
+	_assert_true(int(leo_nasa["cml_level"]) >= 4, "Balanced LEO design reaches at least JPL CML 4")
+	_assert_approx(float(leo_nasa["margins"]["link_req_db"]), 6.0, 0.01, "LEO proximity link margin requires >= 6 dB per JPL Team X")
+	_assert_true("PUNCH" in str(leo_nasa["nasa_analogue"]["mission_name"]), "LEO mission maps to NASA PUNCH/BisonSat analogue")
+	_assert_true("SmallSat" in NasaMissionFramework.classify_form_factor(250.0), "Sub-300 kg spacecraft classifies as SmallSat per CubeSat 101")
+	_assert_true("Bus" in str(leo_nasa["form_factor"]), "340 kg+ wet-mass LEO stack classifies above 300 kg SmallSat cap")
+
+	var mars_design := ProbeDesign.new(parts, lvs["lv_heavy"])
+	for pid in ["eng_ion", "tank_large", "solar_array", "solar_array", "bat_hv", "bat_hv", "comms_hga", "inst_spec", "inst_radar"]:
+		mars_design.add_part(pid)
+	var mars_nasa: Dictionary = NasaMissionFramework.assess(mars_design, missions[2])
+	_assert_approx(float(mars_nasa["margins"]["link_req_db"]), 3.0, 0.01, "Deep-space Mars link margin requires >= 3 dB per JPL Team X")
+	_assert_true("MAVEN" in str(mars_nasa["nasa_analogue"]["mission_name"]), "Mars mission maps to NASA MAVEN/Dawn analogue")
+
+	var mars_script: String = NasaMissionFramework.generate_gmat_script(mars_design, missions[2])
+	_assert_true("Create Spacecraft Probe;" in mars_script and "Mars50c.cof" in mars_script, "GMAT generator writes Mars50c gravity force model")
+	_assert_true("SRP.Flux = 1358;" in mars_script and "149597870.691" in mars_script, "GMAT generator uses official R2026a SRP flux and Nominal_Sun")
+	_assert_true("ImpulsiveBurn TCM1;" in mars_script and "Axes = VNB;" in mars_script, "GMAT generator exports VNB impulsive TCM maneuver")
+
+	var lunar_script: String = NasaMissionFramework.generate_gmat_script(leo_design, missions[1])
+	_assert_true("LP165P.cof" in lunar_script, "GMAT lunar script includes LP165P lunar gravity potential")
+
+	Loc.set_lang("en")
+	_assert_true("LAUNCH SEGMENT" in NasaMissionFramework.format_summary_report(leo_design, missions[0]), "NASA summary report localizes to English")
+	_assert_true("NASA FRAMEWORK" in LearningOverlay.get_guide_text(), "Learning guide includes NASA CML/GMAT framework section in English")
+	Loc.set_lang("es")
+	_assert_true("MARCO NASA" in LearningOverlay.get_guide_text(), "Learning guide includes NASA CML/GMAT framework section in Spanish")
+
+
+func _test_internal_cabin_archetypes() -> void:
+	var parts := PartCatalog.create_all()
+	var lvs := _get_lv_map()
+	var missions := MissionCatalog.create_all()
+
+	var compact_probe := ProbeDesign.new(parts, lvs["lv_light"])
+	compact_probe.add_part("eng_hydrazine")
+	compact_probe.add_part("inst_cam")
+	_assert_true(InternalCabinRenderer.classify_archetype(compact_probe, missions[0]) == "compact", "Light launcher probe selects compact cupola internal view")
+
+	var explorer_probe := ProbeDesign.new(parts, lvs["lv_medium"])
+	explorer_probe.add_part("eng_biprop")
+	explorer_probe.add_part("tank_medium")
+	_assert_true(InternalCabinRenderer.classify_archetype(explorer_probe, missions[1]) == "explorer", "Medium launcher probe selects explorer bay internal view")
+
+	var heavy_probe := ProbeDesign.new(parts, lvs["lv_heavy"])
+	heavy_probe.add_part("eng_ion")
+	heavy_probe.add_part("tank_large")
+	_assert_true(InternalCabinRenderer.classify_archetype(heavy_probe, missions[2]) == "deep_space", "Heavy ion probe selects deep-space bridge internal view")
+
+	var w_compact := InternalCabinRenderer.window_rect(Vector2(1260, 480), "compact")
+	var w_explorer := InternalCabinRenderer.window_rect(Vector2(1260, 480), "explorer")
+	var w_deep := InternalCabinRenderer.window_rect(Vector2(1260, 480), "deep_space")
+	_assert_true(w_compact.size.x < w_explorer.size.x and w_deep.size.x > w_compact.size.x, "Internal window dimensions differ cleanly between spacecraft models")
+	Loc.set_lang("en")
+	_assert_true(InternalCabinRenderer.archetype_label("deep_space") == "DEEP-SPACE BRIDGE", "Internal cabin archetype label translates to English")
+	Loc.set_lang("es")
+	_assert_true(InternalCabinRenderer.archetype_label("compact") == "CÚPULA COMPACTA", "Internal cabin archetype label translates cleanly to Spanish")
+
+
+func _test_profiles_and_nasa_badges() -> void:
+	Loc.set_lang("es")
+	_assert_true(NasaMissionFramework.sanitize_username("  Elena_Vance 01!! ") == "elena_vance01", "sanitize_username normalizes case and strips disallowed symbols")
+	var bad_name := NasaMissionFramework.validate_profile(" ", "evance")
+	_assert_true(not bool(bad_name["ok"]), "validate_profile rejects empty display name")
+	var bad_user := NasaMissionFramework.validate_profile("Elena", "a!")
+	_assert_true(not bool(bad_user["ok"]), "validate_profile rejects usernames shorter than 2 valid chars")
+	var good := NasaMissionFramework.validate_profile("Elena Vance", "EVance-9")
+	_assert_true(bool(good["ok"]) and str(good["username"]) == "evance-9", "validate_profile accepts valid passwordless Name + Username")
+
+	var missions := MissionCatalog.create_all()
+	var parts := PartCatalog.create_all()
+	var lvs := _get_lv_map()
+	var leo_design := ProbeDesign.new(parts, lvs["lv_light"])
+	for pid in ["eng_hydrazine", "tank_small", "solar_wing", "bat_liion", "inst_cam"]:
+		leo_design.add_part(pid)
+	var sim := FlightSimulator.new(missions[0], leo_design)
+	sim.telemetry.status = FlightTelemetry.Status.VICTORY
+	sim.telemetry.science_score = sim.telemetry.science_min_required
+	sim.telemetry.effective_delta_v = missions[0].required_delta_v * 1.40
+	sim.telemetry.propellant_remaining_kg = sim.telemetry.propellant_max_kg * 0.06
+	var badges := NasaMissionFramework.evaluate_badges(leo_design, missions[0], sim.telemetry, true)
+	_assert_true(badges.has("CML 5") and badges.has("TEAM X >=35%") and badges.has("PILOTO MANUAL"), "evaluate_badges awards NASA CML 5, Team X margin, and Manual Pilot badges")
