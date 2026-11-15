@@ -1,5 +1,7 @@
 # Misión Crítica — Simulador de Misiones Espaciales (Godot 4.7 Pixel Art)
 
+**Descargar el juego para Windows y Linux:** [Ejecutables en Google Drive](https://drive.google.com/drive/folders/1jNFKgfSybNJuBj37LHPnIaHjf34v0Das?usp=sharing).
+
 Simulador 2D en estilo **pixel art** con escena 2.5D (`1280x720` internos; ventana de `1920x1080`) desarrollado en **Godot 4.7** bajo una **arquitectura limpia** por capas (`domain`, `data`, `application`, `presentation`). Modela e integra de extremo a extremo las **9 exigencias contrapuestas de la ingeniería de misiones espaciales**:
 
 1. **Objetivos de la misión**: retorno científico mínimo obligatorio (`min_science_required`) e instrumentos científicos requeridos (`required_instruments`) verificados tanto antes del despegue como en el desenlace de vuelo (`FAILED_OBJECTIVES` si no se capturan y descargan a Tierra).
