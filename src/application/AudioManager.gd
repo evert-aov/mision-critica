@@ -8,6 +8,7 @@ var _cruise_player: AudioStreamPlayer
 var _alarm_player: AudioStreamPlayer
 var _streams: Dictionary = {}
 var _muted: bool = false
+var internal_audio_mode: bool = false
 
 
 func _ready() -> void:
@@ -40,6 +41,10 @@ func set_muted(muted: bool) -> void:
 		stop_alarm_loop()
 
 
+func set_internal_audio_mode(enabled: bool) -> void:
+	internal_audio_mode = enabled
+
+
 func is_muted() -> bool:
 	return _muted
 
@@ -67,12 +72,12 @@ func set_engine_loop(active: bool, throttle: float = 0.5, braking: bool = false)
 		_engine_player.stream = _streams[stream_key]
 		_engine_player.stop()
 	if braking:
-		_engine_player.pitch_scale = lerpf(0.72, 1.16, throttle)
-		_engine_player.volume_db = lerpf(-15.0, -4.5, throttle)
+		_engine_player.pitch_scale = lerpf(0.72, 1.16, throttle) * (0.78 if internal_audio_mode else 1.0)
+		_engine_player.volume_db = lerpf(-15.0, -4.5, throttle) - (5.0 if internal_audio_mode else 0.0)
 	else:
 		var turbo_boost_db: float = 1.5 if throttle >= 0.95 else 0.0
-		_engine_player.pitch_scale = lerpf(0.78, 1.48, throttle)
-		_engine_player.volume_db = lerpf(-16.0, -4.5, throttle) + turbo_boost_db
+		_engine_player.pitch_scale = lerpf(0.78, 1.48, throttle) * (0.78 if internal_audio_mode else 1.0)
+		_engine_player.volume_db = lerpf(-16.0, -4.5, throttle) + turbo_boost_db - (5.0 if internal_audio_mode else 0.0)
 	if not _engine_player.playing and _engine_player.stream != null:
 		_engine_player.play()
 
@@ -89,8 +94,8 @@ func set_cruise_loop(active: bool, speed_factor: float = 0.35) -> void:
 	if _cruise_player.stream == null and _streams.has("cruise_hum"):
 		_cruise_player.stream = _streams["cruise_hum"]
 	var clamped_speed: float = clampf(speed_factor, 0.0, 1.0)
-	_cruise_player.pitch_scale = lerpf(0.84, 1.24, clamped_speed)
-	_cruise_player.volume_db = lerpf(-26.0, -18.5, clamped_speed)
+	_cruise_player.pitch_scale = lerpf(0.84, 1.24, clamped_speed) * (0.85 if internal_audio_mode else 1.0)
+	_cruise_player.volume_db = lerpf(-26.0, -18.5, clamped_speed) + (2.5 if internal_audio_mode else 0.0)
 	if not _cruise_player.playing and _cruise_player.stream != null:
 		_cruise_player.play()
 
@@ -147,10 +152,18 @@ func _load_or_synthesize_streams() -> void:
 			_streams[key] = stream
 		else:
 			_streams[key] = _synthesize_fallback(key)
+	for extra_key in ["cover", "window_alert", "separation"]:
+		_streams[extra_key] = _synthesize_fallback(extra_key)
 
 
 func _synthesize_fallback(key: String) -> AudioStreamWAV:
 	match key:
+		"cover":
+			return _build_dual_tone(290.0, 480.0, 0.06, 0.24)
+		"window_alert":
+			return _build_dual_tone(880.0, 1175.0, 0.16, 0.24)
+		"separation":
+			return _build_noise_burst(0.18, 0.30, false, 0.28)
 		"click":
 			return _build_tone(660.0, 0.045, 0.25, "square", false)
 		"switch":
