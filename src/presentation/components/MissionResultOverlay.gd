@@ -147,6 +147,47 @@ func show_result(t: FlightTelemetry, mission: MissionSpec) -> void:
 		"\n".join(log_tail),
 	]
 	_lbl_details.text += Loc.pick("\n\nQUÉ APRENDER:\n", "\n\nKEY TAKEAWAY:\n") + _learning_feedback(t)
+	if mission != null:
+		var analogue: Dictionary = NasaMissionFramework.get_mission_analogue(mission.id)
+		var design_ref: ProbeDesign = null if Engine.is_editor_hint() else GameState.current_design
+		var nasa_summary: String = ""
+		if design_ref != null:
+			var nasa: Dictionary = NasaMissionFramework.assess(design_ref, mission, t)
+			var m_nasa: Dictionary = nasa.get("margins", {})
+			var badges_line: String = ""
+			var pilot_line: String = ""
+			if not Engine.is_editor_hint():
+				if not GameState.last_flight_badges.is_empty():
+					badges_line = Loc.pick("\n  Insignias NASA: ", "\n  NASA Badges: ") + " | ".join(GameState.last_flight_badges)
+				if GameState.has_active_profile():
+					var prof: Dictionary = GameState.get_active_profile()
+					pilot_line = Loc.pick(
+						"\n  Comandante: %s (@%s) | Diseño guardado",
+						"\n  Commander: %s (@%s) | Design saved"
+					) % [str(prof.get("display_name", "")), str(prof.get("username", ""))] if t.status == FlightTelemetry.Status.VICTORY else Loc.pick(
+						"\n  Comandante: %s (@%s)",
+						"\n  Commander: %s (@%s)"
+					) % [str(prof.get("display_name", "")), str(prof.get("username", ""))]
+			nasa_summary = Loc.pick(
+				"\n  Madurez: %s | Reserva ODAR EOL: %.1f%% | Clase: %s%s%s",
+				"\n  Maturity: %s | ODAR EOL Reserve: %.1f%% | Class: %s%s%s"
+			) % [
+				str(nasa.get("cml_short", "-")),
+				float(m_nasa.get("disposal_reserve_pct", 0.0)),
+				str(nasa.get("form_factor", "-")),
+				badges_line,
+				pilot_line,
+			]
+		_lbl_details.text += Loc.pick(
+			"\n\nREFERENCIA NASA (SEGMENTO USUARIO Y GMAT):\n  Análogo NASA: %s (%s)\n  Modelo GMAT: %s\n  %s%s",
+			"\n\nNASA REFERENCE (USER SEGMENT & GMAT):\n  NASA Analogue: %s (%s)\n  GMAT Model: %s\n  %s%s"
+		) % [
+			str(analogue.get("mission_name", "-")),
+			str(analogue.get("discipline", "-")),
+			str(analogue.get("force_model", "-")),
+			str(analogue.get("why_similar", "")),
+			nasa_summary,
+		]
 	_lbl_details.text += Loc.pick(
 		"\n\nMODELO: segundos de juego; datos x9200. Consulta AYUDA para unidades y simplificaciones.",
 		"\n\nMODEL: game seconds; comms x9200. Check HELP for units & game-scale notes."

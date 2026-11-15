@@ -117,12 +117,12 @@ Pick a mission with 1-3 or click. In assembly, BASE [B] loads a viable design; A
 
 KEYBOARD & MOUSE
 In assembly: 1-6 switches category, Left/Right steps categories, Up/Down selects parts, and +/- changes count. Double-click equips and right-click removes; scroll wheel moves the list and adjusts count over +/-. In the blueprint, wheel zooms, drag pans, and middle click centers.
-In flight: A/D rotates; 1-5 picks orientation; W/Q or Up/Down changes thrust; T triggers 100% turbo; C opens the safety cover and Space toggles engine ignition. P deploys solar arrays, R toggles RCS, S holds attitude, and X cuts thrust to zero. F2/F3/F4 toggle master/comms/science buses and F7/F8/F9 trigger camera/spectrometer/radar. M toggles AUTO and V shows/hides HUD guides.
+In flight: A/D rotates; 1-5 picks orientation; K toggles Internal/External view; W/Q or Up/Down changes thrust; T triggers 100% turbo; C opens the safety cover and Space toggles engine ignition. P deploys solar arrays, R toggles RCS, S holds attitude, and X cuts thrust to zero. F2/F3/F4 toggle master/comms/science buses and F7/F8/F9 trigger camera/spectrometer/radar. M toggles AUTO and V shows/hides HUD guides.
 On the space scene: left-click aims toward cursor, right-click holds attitude, middle-click toggles guides, and scroll wheel adjusts throttle in 5% steps (Shift: 1%). The thrust lever accepts click, drag, and wheel; right-click zeroes it. Wheel over logs/briefs scrolls only their text.
 In debrief: R retries, D returns to design, and Esc returns to missions. Here: wheel, arrows, PgUp/PgDn, or Home/End scroll; Esc or F1 closes. Tab moves button focus and Enter activates it. Amber borders highlight keyboard focus.
 
-2.5D SPACE VIEWPORT
-The space scene takes the top 70% and the flight deck occupies the bottom 30%, with all instruments visible. V or GUIDES hides/shows compass & explanations without resizing the cockpit. You will see stage separation, cruise, approach, science flyby, and orbital insertion. Camera distances are compressed so probe and target stay visible on a 1280x720 viewport (scaled to 1920x1080).
+2.5D SPACE & INTERNAL VIEWS
+The space scene takes the top 70% and the flight deck occupies the bottom 30%, with all instruments visible. Press K to toggle between the external 2.5D view and a first-person internal cabin viewport (which adapts to your probe model: Compact Cupola, Explorer Bay, or Deep-Space Bridge, with external solar wings, HGA dish, and science sensors visible outside the glass). V or GUIDES hides/shows compass & explanations without resizing the cockpit. You will see forward motion along the trajectory corridor, stage separation, cruise, approach, science flyby, and orbital insertion.
 
 READING ATTITUDE & ARROWS
 Blue arrow v marks flight path and defines local PRO 0°. RET 180° points thrust opposite to v to brake. White arrow shows probe heading; amber arrow & arc show pending slew and active thrust. Use the local compass to compare SUN, EARTH, and TARGET. Controlled slews appear as Caution while aligning; uncontrolled spin can become Critical. Sun & radio markers are schematic pointing references, not an astronomical map.
@@ -152,18 +152,21 @@ ORIENTATION & WINDOWS
 PRO 0° executes TCM course corrections. TARGET aims sensors during flyby. EARTH maximizes downlink speed. SOLAR peaks charging. RET 180° brakes into orbit. RCS spends tiny fuel puffs to slew faster and desaturate reaction wheels.
 
 AUTOPILOT & GAME SCALES
-AUTO operates your exact spacecraft using the same rules and limits. Orbits, engines, and rates are tuned for short playable sessions (thrust x45, electrical clock 0.06 h/game-s, comms data x9200). Use results to refine your engineering trade-offs!"""
+AUTO operates your exact spacecraft using the same rules and limits. Orbits, engines, and rates are tuned for short playable sessions (thrust x45, electrical clock 0.06 h/game-s, comms data x9200). Use results to refine your engineering trade-offs!
+
+NASA FRAMEWORK (CML / 4 SEGMENTS / CUBESAT 101 / GMAT)
+Mission engineering follows NASA SMD's 4 Mission Segments (Launch, Space, Ground MOS/GDS, User Science), JPL Concept Maturity Levels CML 1-5 (Team X recommends >=35% mass/power margin at CML 4 and >=3 dB deep-space / >=6 dB proximity link margin), and CubeSat 101 verification gates (MEL, ODAR end-of-life disposal, DITL inhibits, Vibration/TVAC). In Assembly press N (NASA CML) to audit CML 1-5 readiness or export a NASA GMAT R2026a .script with JGM2/LP165P/Mars50c gravity, SRP Flux (1358/1367 W/m²), Nominal_Sun (149597870.691 km), and VNB TCM/MOI burns."""
 	return """PRIMER VUELO
 Elige una misión con 1-3 o clic. En ensamblaje, BASE [B] carga un diseño viable; AUTOMÁTICO [F6] observa su operación y MANUAL [F5] permite pilotar. F1 abre esta ayuda y pausa el vuelo.
 
 TECLADO Y MOUSE
 En ensamblaje: 1-6 cambia categoría, izquierda/derecha recorre categorías, arriba/abajo selecciona equipo y +/- cambia cantidad. Doble clic equipa y derecho quita; la rueda desplaza la lista y, sobre los botones +/-, cambia cantidad. En el plano, rueda amplía, arrastrar mueve y clic central centra.
-En vuelo: A/D gira; 1-5 elige orientación; W/Q o arriba/abajo cambia empuje; T activa turbo 100%; C abre la tapa y Espacio enciende/apaga el motor. P despliega paneles, R activa RCS, S estabiliza y X pone empuje a cero. F2/F3/F4 controla buses maestro/radio/ciencia y F7/F8/F9 activa cámara/espectrómetro/radar. M cambia AUTO y V muestra/oculta ayudas visuales.
+En vuelo: A/D gira; 1-5 elige orientación; K alterna Vista Externa/Interna; W/Q o arriba/abajo cambia empuje; T activa turbo 100%; C abre la tapa y Espacio enciende/apaga el motor. P despliega paneles, R activa RCS, S estabiliza y X pone empuje a cero. F2/F3/F4 controla buses maestro/radio/ciencia y F7/F8/F9 activa cámara/espectrómetro/radar. M cambia AUTO y V muestra/oculta ayudas visuales.
 Sobre el espacio: clic izquierdo orienta hacia el puntero, derecho estabiliza, central muestra/oculta ayudas y rueda cambia empuje en pasos del 5% (Shift: 1%). La palanca admite clic, arrastre y rueda; derecho la lleva a cero. La rueda sobre informes solo desplaza su texto.
 En resultado: R repite, D vuelve al diseño y Esc al menú. En la ayuda: rueda, flechas, RePág/AvPág o Inicio/Fin leen el texto; Esc o F1 vuelve al juego. Tab mueve el foco de los botones e Intro los activa. El borde ámbar identifica el foco de teclado.
 
-VISTA ESPACIAL 2.5D
-La escena ocupa el 70% y la cabina el 30% inferior, con todos sus controles visibles. V o AYUDAS oculta/muestra brújula y explicaciones sin mover la cabina. Verás separación del lanzador, tránsito, aproximación, ciencia e inserción. La cámara comprime distancias para mantener visibles la nave y el destino. La interfaz usa 1280x720 internos, preparada para 1920x1080.
+VISTA ESPACIAL 2.5D Y VISTA INTERNA
+La escena ocupa el 70% y la cabina el 30% inferior, con todos sus controles visibles. Pulsa K para alternar entre la vista espacial externa y la vista interna por el ventanal de tu modelo de sonda (Cúpula Compacta, Bahía Exploradora o Puente Profundo, mostrando tus paneles, antena y sensores por fuera y el corredor de trayectoria avanzando hacia el destino). V o AYUDAS oculta/muestra brújula y explicaciones sin mover la cabina. Verás separación del lanzador, tránsito, aproximación, ciencia e inserción. La interfaz usa 1280x720 internos, preparada para 1920x1080.
 
 CÓMO LEER LOS GIROS
 La flecha azul v marca el movimiento y define PRO 0° en el marco local. RET 180° dirige el empuje al lado opuesto para frenar. La flecha blanca muestra la nave; la ámbar y el arco muestran el giro solicitado y el empuje. La brújula local permite comparar SOL, TIERRA y OBJETIVO. El giro controlado aparece como precaución mientras se alinea; una pérdida de control puede ser crítica. Sol y radio son referencias esquemáticas de orientación, no un mapa astronómico exacto.
@@ -199,4 +202,7 @@ MODELO DE JUEGO
 Las órbitas, motores y cifras de catálogo están simplificados y balanceados para partidas cortas. No son especificaciones de vehículos reales. El empuje se acelera x45, el balance eléctrico usa 0.06 horas por segundo de juego y los datos x9200; son escalas independientes, no un reloj físico único. El cronómetro muestra segundos de juego.
 
 APRENDER DEL RESULTADO
-Sin batería: añade reserva, despliega paneles o apaga buses. Sin inserción: reserva propelente y frena en retrógrado durante la ventana. Sin ciencia: captura apuntando al objetivo y transmite antes de terminar. Reensambla y compara el resultado de tus decisiones."""
+Sin batería: añade reserva, despliega paneles o apaga buses. Sin inserción: reserva propelente y frena en retrógrado durante la ventana. Sin ciencia: captura apuntando al objetivo y transmite antes de terminar. Reensambla y compara el resultado de tus decisiones.
+
+MARCO NASA (CML / 4 SEGMENTOS / CUBESAT 101 / GMAT)
+El juego integra los 4 Segmentos NASA SMD (Lanzamiento, Espacio, Tierra MOS/GDS y Usuario Ciencia), los Niveles de Madurez Conceptual JPL CML 1-5 (Team X exige >=35% de margen en masa/potencia en CML 4 y >=3 dB en espacio profundo o >=6 dB en proximidad), y las compuertas de CubeSat 101 (MEL, reporte ODAR de basura orbital, pruebas DITL e inhibiciones eléctricas, Vibración/TVAC). Pulsa N en Ensamblaje para auditar CML 1-5 y exportar tu diseño a un script oficial NASA GMAT R2026a (.script) con JGM2/LP165P/Mars50c, flujo solar 1358/1367 W/m² y maniobras VNB."""

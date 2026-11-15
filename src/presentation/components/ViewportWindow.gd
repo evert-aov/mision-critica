@@ -84,6 +84,16 @@ func set_guidance_visible(enabled: bool) -> void:
 	_space_view._front.queue_redraw()
 
 
+func set_internal_view(enabled: bool) -> void:
+	_space_view.set_internal_view(enabled)
+	if _telemetry != null:
+		update_telemetry(_telemetry, 0.0)
+
+
+func is_internal_view() -> bool:
+	return _space_view != null and _space_view.internal_view
+
+
 func setup(mission: MissionSpec, design: ProbeDesign = null) -> void:
 	_mission = mission
 	_space_view.setup(mission, design)
@@ -103,10 +113,13 @@ func update_telemetry(t: FlightTelemetry, dt: float) -> void:
 	_lbl_state.text = FlightTelemetry.system_state_label(t.system_state)
 	_lbl_state.add_theme_color_override("font_color", [ThemeFactory.COL_GREEN, ThemeFactory.COL_AMBER, ThemeFactory.COL_RED][int(t.system_state)])
 	var snapshot: Dictionary = _space_view.get_scene_snapshot()
-	_lbl_stage.text = str(snapshot.get("stage", Loc.pick("PREPARANDO ESCENA", "PREPARING SCENE")))
+	var stage_text: String = str(snapshot.get("stage", Loc.pick("PREPARANDO ESCENA", "PREPARING SCENE")))
+	if _space_view.internal_view:
+		stage_text = "%s  [%s]" % [stage_text, InternalCabinRenderer.archetype_label(str(snapshot.get("cabin_archetype", "explorer")))]
+	_lbl_stage.text = stage_text
 	_lbl_stage.tooltip_text = Loc.pick(
-		"Vista 2.5D, escala visual comprimida. Clic izquierdo: orientar. Derecho: estabilizar. Rueda: empuje. Clic central: mostrar/ocultar ayudas. La cabina permanece visible.",
-		"2.5D compressed visual view. Left click: aim. Right click: hold attitude. Wheel: thrust. Middle click: toggle guides. Cockpit stays visible."
+		"Vista 2.5D externa / cabina interna [K]. Clic izquierdo: orientar. Derecho: estabilizar. Rueda: empuje. Clic central: mostrar/ocultar ayudas.",
+		"2.5D external / internal cabin view [K]. Left click: aim. Right click: hold attitude. Wheel: thrust. Middle click: toggle guides."
 	)
 	_lbl_explanation.text = _explain(t)
 	_lbl_explanation.tooltip_text = _lbl_explanation.text
@@ -115,8 +128,8 @@ func update_telemetry(t: FlightTelemetry, dt: float) -> void:
 		"SYSTEMS NOMINAL | MASS, POWER & DATA CONSTRAINED"
 	)
 	_lbl_controls.text = Loc.pick(
-		"A/D GIRAR | 1-5 APUNTAR | RUEDA EMPUJE | C TAPA | ESP MOTOR | F1 AYUDA",
-		"A/D TURN | 1-5 AIM | WHEEL THRUST | C COVER | SPACE BURN | F1 HELP"
+		"A/D GIRAR | 1-5 APUNTAR | K VISTA INT/EXT | RUEDA EMPUJE | C TAPA | ESP MOTOR | F1 AYUDA",
+		"A/D TURN | 1-5 AIM | K INT/EXT VIEW | WHEEL THRUST | C COVER | SPACE BURN | F1 HELP"
 	)
 	_lbl_alert.tooltip_text = _lbl_alert.text
 	queue_redraw()
@@ -134,6 +147,11 @@ func mouse_attitude(point: Vector2) -> float:
 	var snapshot: Dictionary = get_scene_snapshot()
 	if snapshot.is_empty():
 		return 0.0
+	if _space_view.internal_view and _telemetry != null:
+		var win := InternalCabinRenderer.window_rect(_space_view.size, str(snapshot.get("cabin_archetype", "explorer")))
+		var local_x: float = point.x - _space_view.position.x - win.get_center().x
+		var delta_deg: float = (local_x / maxf(win.size.x * 0.54, 1.0)) * 60.0
+		return RocketMath.normalize_angle_deg(_telemetry.attitude_deg + delta_deg)
 	var direction: Vector2 = point - _space_view.position - Vector2(snapshot["ship"])
 	return RocketMath.normalize_angle_deg(rad_to_deg(direction.angle() - float(snapshot["frame_angle"])))
 

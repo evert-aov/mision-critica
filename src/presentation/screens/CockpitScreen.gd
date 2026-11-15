@@ -13,6 +13,7 @@ var _result_overlay: MissionResultOverlay
 var _btn_auto: Button
 var _lbl_auto: Label
 var _btn_view: Button
+var _btn_cam: Button
 var _btn_help: Button
 var _btn_abort: Button
 var _btn_lang: Button
@@ -20,6 +21,7 @@ var _lbl_summary_head: Label
 var _lbl_ops_head: Label
 var _lbl_ops_hint: Label
 var _guidance_visible: bool = true
+var _internal_view: bool = false
 var _deck_frame: Control
 var _control_dock: HBoxContainer
 var _lbl_mission_status: Label
@@ -34,6 +36,9 @@ var _prev_braking: bool = false
 var _prev_throttle: float = 0.0
 var _prev_panels_deployed: bool = false
 var _prev_attitude_mode: FlightTelemetry.AttitudeMode = FlightTelemetry.AttitudeMode.PROGRADE
+var _prev_safety_cover: bool = false
+var _prev_in_insertion: bool = false
+var _separation_sfx_played: bool = false
 var _prev_captured_count: int = 0
 var _prev_transmitted_count: int = 0
 var _rcs_sfx_cooldown_s: float = 0.0
@@ -78,6 +83,7 @@ func _exit_tree() -> void:
 	AudioManager.stop_engine_loop()
 	AudioManager.stop_cruise_loop()
 	AudioManager.stop_alarm_loop()
+	AudioManager.set_internal_audio_mode(false)
 
 
 func _build_ui() -> void:
@@ -155,6 +161,8 @@ func _build_ui() -> void:
 	_btn_view = _deck_button(grid, "AYUDAS ON [V]", func(): set_guidance_visible(not _guidance_visible))
 	_btn_help = _deck_button(grid, "AYUDA [F1]", func(): GameState.learning_requested.emit())
 	_btn_abort = _deck_button(grid, "ABORTAR", func(): GameState.enter_assembly())
+	_btn_cam = _deck_button(actions, "VISTA: EXT [K]", func(): set_internal_view(not _internal_view))
+	_btn_cam.custom_minimum_size.y = 22
 	var hint_scroll := ScrollContainer.new()
 	hint_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	hint_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -183,9 +191,17 @@ func _refresh_static_texts() -> void:
 		"Ocultar/mostrar brújula y explicaciones sin cambiar la proporción escena/cabina.",
 		"Show/hide compass & overlays without resizing scene vs cockpit deck."
 	)
+	_btn_cam.text = Loc.pick(
+		"VISTA: INT [K]" if _internal_view else "VISTA: EXT [K]",
+		"VIEW: INT [K]" if _internal_view else "VIEW: EXT [K]"
+	)
+	_btn_cam.tooltip_text = Loc.pick(
+		"Alternar entre vista espacial externa y vista interna por el ventanal de tu modelo de nave.",
+		"Switch between external 2.5D space view and first-person internal cabin view."
+	)
 	_lbl_ops_hint.text = Loc.pick(
-		"A/D girar | 1-5 orientar\nW/Q o rueda: empuje | T turbo\nC tapa | Espacio motor | X cero\nP paneles | R RCS | S estabilizar\nClic: apuntar | Der.: estabilizar",
-		"A/D turn | 1-5 orient\nW/Q or wheel: thrust | T turbo\nC cover | Space burn | X zero\nP panels | R RCS | S hold\nClick: aim | Right: hold"
+		"A/D girar | 1-5 orientar | K vista\nW/Q o rueda: empuje | T turbo\nC tapa | Espacio motor | X cero\nP paneles | R RCS | S estabilizar\nClic: apuntar | Der.: estabilizar",
+		"A/D turn | 1-5 orient | K view\nW/Q or wheel: thrust | T turbo\nC cover | Space burn | X zero\nP panels | R RCS | S hold\nClick: aim | Right: hold"
 	)
 
 
@@ -336,10 +352,14 @@ func _input(event: InputEvent) -> void:
 	if sim == null or sim.telemetry.status != FlightTelemetry.Status.IN_FLIGHT:
 		return
 	var key: int = event.keycode if event.keycode != 0 else event.physical_keycode
-	if event.pressed and not event.echo and key in [KEY_M, KEY_V, KEY_ESCAPE]:
+	if event.pressed and not event.echo and key in [KEY_M, KEY_V, KEY_K, KEY_ESCAPE]:
 		match key:
 			KEY_M: _toggle_automatic()
 			KEY_V: set_guidance_visible(not _guidance_visible)
+			KEY_K:
+				if not Engine.is_editor_hint():
+					AudioManager.play_sfx("click", -6.0)
+				set_internal_view(not _internal_view)
 			KEY_ESCAPE: GameState.learning_requested.emit()
 		get_viewport().set_input_as_handled()
 		return
@@ -524,6 +544,17 @@ func set_guidance_visible(enabled: bool) -> void:
 	)
 
 
+func set_internal_view(enabled: bool) -> void:
+	_internal_view = enabled
+	_viewport_win.set_internal_view(enabled)
+	if not Engine.is_editor_hint():
+		AudioManager.set_internal_audio_mode(enabled)
+	_btn_cam.text = Loc.pick(
+		"VISTA: INT [K]" if enabled else "VISTA: EXT [K]",
+		"VIEW: INT [K]" if enabled else "VIEW: EXT [K]"
+	)
+
+
 func _sync_views(dt: float) -> void:
 	var sim: FlightSimulator = GameState.active_simulator
 	_btn_auto.text = Loc.pick(
@@ -565,6 +596,11 @@ func _reset_audio_tracking(t: FlightTelemetry) -> void:
 	_prev_throttle = t.throttle
 	_prev_panels_deployed = t.panels_deployed
 	_prev_attitude_mode = t.attitude_mode
+	_prev_safety_cover = t.safety_cover_open
+	_prev_in_insertion = t.in_insertion_window
+	_separation_sfx_played = false
+	if not Engine.is_editor_hint():
+		AudioManager.set_internal_audio_mode(_internal_view)
 	_prev_captured_count = t.instruments_captured.size()
 	_prev_transmitted_count = t.instruments_transmitted.size()
 	_rcs_sfx_cooldown_s = 0.0
@@ -606,6 +642,13 @@ func _update_audio_and_shake(t: FlightTelemetry, dt: float) -> void:
 		AudioManager.play_sfx("servo", -8.0)
 	if t.panels_deployed and not _prev_panels_deployed:
 		AudioManager.play_sfx("deploy", -5.0)
+	if t.safety_cover_open != _prev_safety_cover:
+		AudioManager.play_sfx("cover", -6.0)
+	if t.in_insertion_window and not _prev_in_insertion:
+		AudioManager.play_sfx("window_alert", -4.0)
+	if not _separation_sfx_played and t.elapsed_s >= 0.35 and t.progress_norm < 0.08:
+		_separation_sfx_played = true
+		AudioManager.play_sfx("separation", -5.0)
 
 	var captured_now: int = t.instruments_captured.size()
 	if captured_now > _prev_captured_count:
@@ -619,6 +662,8 @@ func _update_audio_and_shake(t: FlightTelemetry, dt: float) -> void:
 	_prev_throttle = t.throttle
 	_prev_panels_deployed = t.panels_deployed
 	_prev_attitude_mode = t.attitude_mode
+	_prev_safety_cover = t.safety_cover_open
+	_prev_in_insertion = t.in_insertion_window
 	_prev_captured_count = captured_now
 	_prev_transmitted_count = transmitted_now
 

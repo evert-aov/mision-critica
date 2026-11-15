@@ -24,8 +24,10 @@ var _lbl_twr_orb: Label
 var _lbl_energy: Label
 var _lbl_comms: Label
 var _lbl_objectives: Label
+var _lbl_nasa: Label
 var _lbl_validation: Label
 var _btn_missions: Button
+var _btn_nasa: Button
 var _btn_help: Button
 var _btn_lang: Button
 var _btn_base: Button
@@ -35,6 +37,18 @@ var _preview_hint: Label
 var _hint_lbl: Label
 var _btn_launch: Button
 var _btn_auto: Button
+var _nasa_modal: PanelContainer
+var _nasa_scroll: ScrollContainer
+var _nasa_title: Label
+var _nasa_text: Label
+var _nasa_tab_report: Button
+var _nasa_tab_gmat: Button
+var _nasa_btn_export: Button
+var _nasa_btn_close: Button
+var _nasa_export_status: Label
+var _nasa_gmat_mode: bool = false
+var _last_mission: MissionSpec
+var _last_design: ProbeDesign
 
 
 func _ready() -> void:
@@ -45,9 +59,12 @@ func _ready() -> void:
 		var design := ProbeDesign.new(PartCatalog.create_all(), LaunchVehicleCatalog.create_all()[0])
 		for pid in ["eng_hydrazine", "tank_small", "solar_compact", "bat_liion", "inst_cam"]:
 			design.add_part(pid)
+		var editor_mission := MissionCatalog.create_all()[0]
+		_last_mission = editor_mission
+		_last_design = design
 		_blueprint_view.set_design(design)
 		_populate_catalog(LaunchVehicleCatalog.create_all(), design)
-		_apply_telemetry_values(MissionCatalog.create_all()[0], RocketMath.evaluate_design(design, MissionCatalog.create_all()[0]))
+		_apply_telemetry_values(editor_mission, RocketMath.evaluate_design(design, editor_mission))
 		return
 	GameState.design_changed.connect(_on_design_changed)
 	GameState.mission_selected.connect(_on_mission_selected)
@@ -84,6 +101,7 @@ func _build_ui() -> void:
 	var spacer := Control.new()
 	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	actions.add_child(spacer)
+	_btn_nasa = _action(actions, "NASA CML [N]", KEY_NONE, func(): _toggle_nasa_modal())
 	_btn_help = _action(actions, "AYUDA [F1]", KEY_NONE, func(): GameState.learning_requested.emit())
 	_btn_lang = _action(actions, "ES / EN [F2]", KEY_F2, func(): GameState.toggle_language())
 	_btn_base = _action(actions, "BASE [B]", KEY_B, func(): GameState.load_recommended_baseline())
@@ -136,6 +154,7 @@ func _build_ui() -> void:
 	_lbl_energy = _add_stat_label(right)
 	_lbl_comms = _add_stat_label(right)
 	_lbl_objectives = _add_stat_label(right)
+	_lbl_nasa = _add_stat_label(right)
 	var diagnostic := PanelContainer.new()
 	diagnostic.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	diagnostic.custom_minimum_size.y = 48
@@ -150,10 +169,114 @@ func _build_ui() -> void:
 	_btn_auto = _action(right, "AUTOMÁTICO [F6]", KEY_F6, func(): GameState.launch_mission(true))
 	_hint_lbl = _add_stat_label(root)
 	_hint_lbl.add_theme_color_override("font_color", ThemeFactory.COL_MUTED)
+	_build_nasa_modal()
+
+
+func _build_nasa_modal() -> void:
+	_nasa_modal = PanelContainer.new()
+	_nasa_modal.visible = false
+	_nasa_modal.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_nasa_modal.offset_left = 48
+	_nasa_modal.offset_top = 36
+	_nasa_modal.offset_right = -48
+	_nasa_modal.offset_bottom = -36
+	_nasa_modal.mouse_filter = Control.MOUSE_FILTER_STOP
+	add_child(_nasa_modal)
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 6)
+	_nasa_modal.add_child(box)
+	var top := HBoxContainer.new()
+	top.add_theme_constant_override("separation", 6)
+	box.add_child(top)
+	_nasa_title = _add_stat_label(top)
+	_nasa_title.add_theme_color_override("font_color", ThemeFactory.COL_CYAN)
+	_nasa_tab_report = _action(top, "INFORME CML", KEY_NONE, func():
+		_nasa_gmat_mode = false
+		_refresh_nasa_modal()
+	)
+	_nasa_tab_gmat = _action(top, "GMAT .script", KEY_NONE, func():
+		_nasa_gmat_mode = true
+		_refresh_nasa_modal()
+	)
+	var frame := PanelContainer.new()
+	frame.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	box.add_child(frame)
+	_nasa_scroll = ScrollContainer.new()
+	_nasa_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	frame.add_child(_nasa_scroll)
+	_nasa_text = Label.new()
+	_nasa_text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_nasa_text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_nasa_scroll.add_child(_nasa_text)
+	var bottom := HBoxContainer.new()
+	bottom.add_theme_constant_override("separation", 6)
+	box.add_child(bottom)
+	_nasa_export_status = _add_stat_label(bottom)
+	_nasa_export_status.add_theme_color_override("font_color", ThemeFactory.COL_GREEN)
+	_nasa_btn_export = _action(bottom, "EXPORTAR GMAT", KEY_NONE, func(): _export_gmat_script())
+	_nasa_btn_close = _action(bottom, "CERRAR [ESC]", KEY_NONE, func(): _toggle_nasa_modal(false))
+
+
+func _toggle_nasa_modal(force_open: Variant = null) -> void:
+	var target: bool = (not _nasa_modal.visible) if force_open == null else bool(force_open)
+	_nasa_modal.visible = target
+	if target:
+		_nasa_export_status.text = ""
+		_refresh_nasa_modal()
+		_nasa_scroll.scroll_vertical = 0
+		_nasa_btn_close.grab_focus()
+
+
+func _export_gmat_script() -> void:
+	var mission: MissionSpec = _last_mission if Engine.is_editor_hint() else GameState.current_mission
+	var design: ProbeDesign = _last_design if Engine.is_editor_hint() else GameState.current_design
+	if mission == null or design == null:
+		return
+	var script_body: String = NasaMissionFramework.generate_gmat_script(design, mission)
+	var file_path: String = "user://gmat_%s.script" % mission.id
+	var file := FileAccess.open(file_path, FileAccess.WRITE)
+	if file != null:
+		file.store_string(script_body)
+		file.close()
+		_nasa_export_status.text = Loc.pick("Guardado: %s", "Saved: %s") % file_path
+		_nasa_export_status.add_theme_color_override("font_color", ThemeFactory.COL_GREEN)
+	else:
+		_nasa_export_status.text = Loc.pick("No se pudo escribir %s", "Failed to write %s") % file_path
+		_nasa_export_status.add_theme_color_override("font_color", ThemeFactory.COL_RED)
+	if DisplayServer.has_feature(DisplayServer.FEATURE_CLIPBOARD):
+		DisplayServer.clipboard_set(script_body)
+
+
+func _refresh_nasa_modal() -> void:
+	if _nasa_modal == null:
+		return
+	var mission: MissionSpec = _last_mission if Engine.is_editor_hint() else GameState.current_mission
+	var design: ProbeDesign = _last_design if Engine.is_editor_hint() else GameState.current_design
+	_nasa_title.text = Loc.pick(
+		"INGENIERÍA NASA (JPL CML / 4 SEGMENTOS / CUBESAT 101 / GMAT)",
+		"NASA ENGINEERING (JPL CML / 4 SEGMENTS / CUBESAT 101 / GMAT)"
+	)
+	_nasa_tab_report.text = Loc.pick("INFORME CML", "CML REPORT")
+	_nasa_tab_gmat.text = Loc.pick("SCRIPT GMAT", "GMAT SCRIPT")
+	_nasa_btn_export.text = Loc.pick("EXPORTAR .script", "EXPORT .script")
+	_nasa_btn_close.text = Loc.pick("CERRAR [ESC]", "CLOSE [ESC]")
+	_nasa_tab_report.add_theme_stylebox_override("normal", ThemeFactory.control_style(Color("12392f") if not _nasa_gmat_mode else Color("142333"), ThemeFactory.COL_GREEN if not _nasa_gmat_mode else Color("40556d")))
+	_nasa_tab_gmat.add_theme_stylebox_override("normal", ThemeFactory.control_style(Color("12392f") if _nasa_gmat_mode else Color("142333"), ThemeFactory.COL_GREEN if _nasa_gmat_mode else Color("40556d")))
+	if mission == null or design == null:
+		return
+	if _nasa_gmat_mode:
+		_nasa_text.text = NasaMissionFramework.generate_gmat_script(design, mission)
+	else:
+		_nasa_text.text = NasaMissionFramework.format_summary_report(design, mission)
 
 
 func _refresh_static_texts() -> void:
 	_btn_missions.text = Loc.pick("MISIONES [ESC]", "MISSIONS [ESC]")
+	_btn_nasa.text = Loc.pick("NASA CML [N]", "NASA CML [N]")
+	_btn_nasa.tooltip_text = Loc.pick(
+		"Abrir informe NASA JPL CML 1-5, 4 segmentos, CubeSat 101 y generador GMAT R2026a (.script).",
+		"Open NASA JPL CML 1-5, 4 segments, CubeSat 101 & GMAT R2026a (.script) generator."
+	)
 	_btn_help.text = Loc.pick("AYUDA [F1]", "HELP [F1]")
 	_btn_lang.text = Loc.pick("ES / EN [F2]", "EN / ES [F2]")
 	_btn_base.text = Loc.pick("BASE [B]", "BASE [B]")
@@ -192,9 +315,10 @@ func _refresh_static_texts() -> void:
 		"Operate this design with autopilot [F6]. BASE [B] loads a recommended configuration."
 	)
 	_hint_lbl.text = Loc.pick(
-		"1-6 TIPO | FLECHAS EQUIPO | +/- CANTIDAD | F2 IDIOMA | TAB FOCO",
-		"1-6 TYPE | ARROWS PART | +/- COUNT | F2 LANG | TAB FOCUS"
+		"1-6 TIPO | FLECHAS EQUIPO | +/- CANTIDAD | N NASA/GMAT | F2 IDIOMA | TAB FOCO",
+		"1-6 TYPE | ARROWS PART | +/- COUNT | N NASA/GMAT | F2 LANG | TAB FOCUS"
 	)
+	_refresh_nasa_modal()
 
 
 func _column(title: String, ratio: float) -> VBoxContainer:
@@ -392,7 +516,25 @@ func _input(event: InputEvent) -> void:
 	if Engine.is_editor_hint() or not event is InputEventKey or not event.pressed or get_tree().paused:
 		return
 	var key: int = event.keycode
-	if key >= KEY_1 and key <= KEY_6:
+	if _nasa_modal != null and _nasa_modal.visible:
+		match key:
+			KEY_ESCAPE, KEY_N:
+				_toggle_nasa_modal(false)
+			KEY_UP:
+				_nasa_scroll.scroll_vertical -= 18
+			KEY_DOWN:
+				_nasa_scroll.scroll_vertical += 18
+			KEY_PAGEUP:
+				_nasa_scroll.scroll_vertical -= int(_nasa_scroll.size.y) - 18
+			KEY_PAGEDOWN:
+				_nasa_scroll.scroll_vertical += int(_nasa_scroll.size.y) - 18
+			_:
+				return
+		get_viewport().set_input_as_handled()
+		return
+	if key == KEY_N:
+		_toggle_nasa_modal()
+	elif key >= KEY_1 and key <= KEY_6:
 		_switch_tab(key - KEY_1)
 	elif key in [KEY_UP, KEY_DOWN]:
 		_selected_index = clampi(_selected_index + (-1 if key == KEY_UP else 1), 0, maxi(0, _catalog_entries.size() - 1))
@@ -423,8 +565,10 @@ func _on_language_changed(_lang: String) -> void:
 
 
 func _refresh_telemetry(evaluation: Dictionary) -> void:
-	_blueprint_view.set_design(GameState.current_design)
-	_apply_telemetry_values(GameState.current_mission, evaluation)
+	_last_mission = GameState.current_mission
+	_last_design = GameState.current_design
+	_blueprint_view.set_design(_last_design)
+	_apply_telemetry_values(_last_mission, evaluation)
 
 
 func _format_part_spec(part: PartSpec) -> String:
@@ -512,7 +656,7 @@ func _apply_telemetry_values(mission: MissionSpec, ev: Dictionary) -> void:
 		ThemeFactory.COL_AMBER if (data_mb > 0.0 and tx_s > mission.transit_duration_s * 0.18) else ThemeFactory.COL_CYAN
 	)
 
-	# 7. Mission Scientific Objectives
+	# 7. Mission Scientific Objectives & NASA CML / Team X Margins
 	var max_sci: int = int(ev.get("max_science", 0))
 	var min_sci: int = int(ev.get("min_science_required", 0))
 	_lbl_objectives.text = Loc.pick("OBJETIVO: %d / %d pts mín", "OBJECTIVE: %d / %d min pts") % [max_sci, min_sci]
@@ -520,6 +664,30 @@ func _apply_telemetry_values(mission: MissionSpec, ev: Dictionary) -> void:
 		"font_color",
 		ThemeFactory.COL_GREEN if max_sci >= min_sci else ThemeFactory.COL_RED
 	)
+	var design_ref: ProbeDesign = _last_design if Engine.is_editor_hint() else GameState.current_design
+	var nasa: Dictionary = NasaMissionFramework.assess(design_ref, mission)
+	if not nasa.is_empty():
+		var m_nasa: Dictionary = nasa["margins"]
+		_lbl_nasa.text = Loc.pick(
+			"NASA %s | M:%.0f%% P:%.0f%% RF:%+.1fdB",
+			"NASA %s | M:%.0f%% P:%.0f%% RF:%+.1fdB"
+		) % [
+			nasa["cml_short"],
+			float(m_nasa["mass_margin_pct"]),
+			float(m_nasa["power_margin_pct"]),
+			float(m_nasa["link_margin_db"]),
+		]
+		_lbl_nasa.tooltip_text = Loc.pick(
+			"JPL %s | Clase: %s | Pulsar N para 4 Segmentos NASA y Script GMAT.",
+			"JPL %s | Class: %s | Press N for NASA 4 Segments & GMAT Script."
+		) % [nasa["cml_label"], nasa["form_factor"]]
+		var cml_lvl: int = int(nasa["cml_level"])
+		_lbl_nasa.add_theme_color_override(
+			"font_color",
+			ThemeFactory.COL_GREEN if cml_lvl >= 4 else (ThemeFactory.COL_AMBER if cml_lvl >= 2 else ThemeFactory.COL_RED)
+		)
+	if _nasa_modal != null and _nasa_modal.visible:
+		_refresh_nasa_modal()
 
 	# 8. Scrollable Systems Engineering Audit Terminal
 	var errors: Array = ev.get("errors", [])
