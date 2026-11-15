@@ -1,6 +1,6 @@
 # Guía del desarrollador — Misión Crítica (Godot 4.7 GDScript)
 
-**Misión Crítica** es un simulador espacial 2D en estilo pixel art (`640x360`) construido sobre Godot 4.7 con separación estricta en capas (**Clean Architecture**): el dominio matemático y físico (`src/domain/`) no depende del `SceneTree` ni de nodos visuales; los catálogos viven en `src/data/`; la coordinación de estado y audio vive en `src/application/`; y las pantallas y widgets retro residen en `src/presentation/`.
+**Misión Crítica** es un simulador espacial 2D en estilo pixel art (`1280x720` internos, ventana `1920x1080`) construido sobre Godot 4.7 con separación estricta en capas (**Clean Architecture**): el dominio matemático y físico (`src/domain/`) no depende del `SceneTree` ni de nodos visuales; los catálogos viven en `src/data/`; la coordinación de estado y audio vive en `src/application/`; y las pantallas y widgets retro residen en `src/presentation/`.
 
 ## Contenido
 
