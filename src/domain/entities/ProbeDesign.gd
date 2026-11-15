@@ -1,25 +1,36 @@
 class_name ProbeDesign
 extends RefCounted
-## Holds the player's current probe configuration in a UI-independent domain model.
+## Holds the player's complete spacecraft & launch vehicle integration in a UI-independent domain model.
 
 const BASE_CHASSIS_MASS_KG: float = 120.0
 const BASE_CHASSIS_COST: int = 15000
 const BASE_AVIONICS_DRAW_W: float = 12.0
 const COMMS_DRAW_W: float = 10.0
+const BASE_COMMS_KBPS: float = 18.0
 const BASE_BATTERY_WH: float = 40.0
 
+var launch_vehicle: LaunchVehicleSpec = null
 var _catalog_by_id: Dictionary = {}
 var _counts: Dictionary = {}
 
 
-func _init(parts_catalog: Array[PartSpec] = []) -> void:
+func _init(parts_catalog: Array[PartSpec] = [], default_lv: LaunchVehicleSpec = null) -> void:
 	set_catalog(parts_catalog)
+	launch_vehicle = default_lv
 
 
 func set_catalog(parts_catalog: Array[PartSpec]) -> void:
 	_catalog_by_id.clear()
 	for part in parts_catalog:
 		_catalog_by_id[part.id] = part
+
+
+func set_launch_vehicle(lv: LaunchVehicleSpec) -> void:
+	launch_vehicle = lv
+
+
+func get_launch_vehicle() -> LaunchVehicleSpec:
+	return launch_vehicle
 
 
 func add_part(part_id: String) -> bool:
@@ -59,6 +70,13 @@ func get_part_count(part_id: String) -> int:
 	return int(_counts.get(part_id, 0))
 
 
+func get_total_module_count() -> int:
+	var total: int = 0
+	for pid in _counts.keys():
+		total += int(_counts[pid])
+	return total
+
+
 func clear() -> void:
 	_counts.clear()
 
@@ -92,12 +110,17 @@ func get_parts_by_category(cat: PartSpec.Category) -> Array[PartSpec]:
 	return result
 
 
+func get_part_spec(part_id: String) -> PartSpec:
+	return _catalog_by_id.get(part_id)
+
+
 func get_counts_snapshot() -> Dictionary:
 	return _counts.duplicate(true)
 
 
 func clone() -> ProbeDesign:
 	var copy := ProbeDesign.new()
+	copy.launch_vehicle = launch_vehicle
 	copy._catalog_by_id = _catalog_by_id.duplicate()
 	copy._counts = _counts.duplicate(true)
 	return copy
